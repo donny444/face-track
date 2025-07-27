@@ -1,0 +1,14 @@
+[
+  {
+    "status": "attended",
+    "count": 24
+  },
+  {
+    "status": "late",
+    "count": 8
+  },
+  {
+    "status": "absent",
+    "count": 1
+  }
+]
