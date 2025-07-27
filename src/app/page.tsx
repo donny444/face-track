@@ -1,95 +1,97 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client"
 
-export default function Home() {
+// import styles from "./page.module.css";
+import { Col, Container, Row } from "react-bootstrap";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+import attendanceData from "@/data/attendance_data.json";
+import attendanceCounts from "@/data/attendance_counts.json";
+
+import BarChartInterface from "@/interfaces/bar_chart_interface.ts";
+import AttendanceCountsInterface from "@/interfaces/attendance_counts_interface.ts";
+
+export default function Summary() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Container>
+      <Row>
+        <Col>
+          <AttendanceCountSummary countData={attendanceCounts} />
+        </Col>
+        <Col>
+          <DailyChartSummary chartData={attendanceData} />
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <AttendanceLogSummary />
+        </Col>
+        <Col>
+          <AttendeeListSummary />
+        </Col>
+      </Row>
+    </Container>
+  );
+}
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+function AttendanceCountSummary({ countData }: AttendanceCountsInterface) {
+  return (
+    <div>
+      <p>เข้าตรงเวลา: {countData[0].count}</p>
+      <p>เข้าสาย: {countData[1].count}</p>
+      <p>ขาด: {countData[2].count}</p>
+    </div>
+  );
+}
+
+interface DailyChartProps {
+  chartData: BarChartInterface
+}
+function DailyChartSummary({ chartData }: DailyChartProps) {
+  const options = {
+    responsive: true,
+    plugins: {
+      title: {
+        display: true,
+        text: "กราฟประจำวัน"
+      }
+    }
+  }
+
+  return (
+    <Bar options={options} data={chartData} /> 
+  );
+}
+
+function AttendanceLogSummary() {
+  return (
+    <div>
+
+    </div>
+  );
+}
+
+function AttendeeListSummary() {
+  return (
+    <div>
+
     </div>
   );
 }
