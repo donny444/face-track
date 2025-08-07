@@ -23,16 +23,9 @@
         "green",
         "yellow",
         "purple",
-        "orange",
-        "blue",
-        "green",
-        "yellow",
-        "purple",
-        "orange",
-        "blue",
-        "green",
-        "yellow"
-      ]
+        "orange"
+      ],
+      "color": "white"
     }
   ]
 }
