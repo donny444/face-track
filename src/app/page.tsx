@@ -1,6 +1,6 @@
 "use client";
 
-// import styles from "./page.module.css";
+import styles from "./page.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Col, Container, Row } from "react-bootstrap";
 import { Bar } from "react-chartjs-2";
@@ -35,7 +35,7 @@ import AttendeeInterface from "@/interfaces/attendee_interface.ts";
 
 export default function Summary() {
   return (
-    <Container className="gap-3">
+    <Container fluid={"md"}>
       <Row>
         <AttendanceCountSummary countData={attendanceCounts} />
         <DailyChartSummary chartData={attendanceData} />
@@ -50,12 +50,21 @@ export default function Summary() {
 
 function AttendanceCountSummary({ countData }: AttendanceCountsInterface) {
   return (
-    <Col className="bg-dark text-white p-2 m-2 rounded">
+    <Col md={4} className="bg-dark text-white p-2 rounded">
       <p className="fs-4 ms-2">สรุปบันทึกการเข้าออก</p>
       <Container className="d-flex flex-column justify-content-evenly h-75">
-        <p className="text-success fs-5 d-flex justify-content-between"><span>เข้าตรงเวลา</span><span>{countData[0].count} คน</span></p>
-        <p className="text-warning fs-5 d-flex justify-content-between"><span>เข้าสาย</span><span>{countData[1].count} คน</span></p>
-        <p className="text-danger fs-5 d-flex justify-content-between"><span>ขาด</span><span>{countData[2].count} คน</span></p>
+        <p className="text-success fs-5 d-flex justify-content-between">
+          <span>เข้าตรงเวลา</span>
+          <span>{countData[0].count} คน</span>
+        </p>
+        <p className="text-warning fs-5 d-flex justify-content-between">
+          <span>เข้าสาย</span>
+          <span>{countData[1].count} คน</span>
+        </p>
+        <p className="text-danger fs-5 d-flex justify-content-between">
+          <span>ขาด</span>
+          <span>{countData[2].count} คน</span>
+        </p>
       </Container>
     </Col>
   );
@@ -73,12 +82,12 @@ function DailyChartSummary({ chartData }: DailyChartProps) {
         display: true,
         text: "กราฟประจำวัน",
         color: "white",
-      }
+      },
     },
   };
 
   return (
-    <Col className="bg-dark text-white p-2 m-2 rounded">
+    <Col md={8} className="bg-dark text-white p-2 rounded">
       <Bar options={options} data={chartData} />
     </Col>
   );
@@ -120,7 +129,9 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
           {attendanceTime < endClassTime && attendanceTime >= lateClassTime ? (
             <td className="text-warning">เข้าสาย</td>
           ) : null}
-          {attendanceTime > endClassTime ? <td className="text-danger">ขาด</td> : null}
+          {attendanceTime > endClassTime ? (
+            <td className="text-danger">ขาด</td>
+          ) : null}
         </tr>
       );
     }
@@ -128,7 +139,7 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
   };
 
   return (
-    <Col className="bg-dark text-white p-2 m-2 rounded">
+    <Col md={6} className="bg-dark text-white p-2 rounded">
       <table className="table table-dark table-striped">
         <thead>
           <tr>
@@ -144,7 +155,6 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
 }
 
 function AttendeeListSummary({ attendees }: AttendeesInterface) {
-
   const startClassTime = new Date().setHours(8, 0, 0, 0);
   const lateClassTime = new Date().setHours(10, 0, 0, 0);
   const endClassTime = new Date().setHours(11, 0, 0, 0);
@@ -167,7 +177,9 @@ function AttendeeListSummary({ attendees }: AttendeesInterface) {
           {attendanceTime < endClassTime && attendanceTime >= lateClassTime ? (
             <td className="text-warning">เข้าสาย</td>
           ) : null}
-          {attendanceTime > endClassTime ? <td className="text-danger">ขาด</td> : null}
+          {attendanceTime > endClassTime ? (
+            <td className="text-danger">ขาด</td>
+          ) : null}
           <td>
             {new Date(attendee.datetime).toLocaleString("th-TH", {
               hour: "2-digit",
@@ -182,7 +194,7 @@ function AttendeeListSummary({ attendees }: AttendeesInterface) {
   };
 
   return (
-    <Col className="bg-dark text-white p-2 m-2 rounded">
+    <Col md={6} className="bg-dark text-white p-2 rounded">
       <table className="table table-dark table-striped">
         <thead>
           <tr>
