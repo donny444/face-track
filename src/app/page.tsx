@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
+
 import styles from "./page.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, Row } from "react-bootstrap";
+
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -13,7 +16,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -51,7 +53,7 @@ export default function Summary() {
 function AttendanceCountSummary({ countData }: AttendanceCountsInterface) {
   return (
     <Col md={4} className="bg-dark text-white p-2 rounded">
-      <p className="fs-4 ms-2">สรุปบันทึกการเข้าออก</p>
+      <p className="fs-4 ms-2">สรุปบันทึกการเข้าเรียน</p>
       <Container className="d-flex flex-column justify-content-evenly h-75">
         <p className="text-success fs-5 d-flex justify-content-between">
           <span>เข้าตรงเวลา</span>
@@ -140,6 +142,14 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
 
   return (
     <Col md={6} className="bg-dark text-white p-2 rounded">
+      <Container className="d-flex flex-row justify-content-between">
+        <p className="fs-4">บันทึกการเข้าเรียนล่าสุด</p>
+        <Button>
+          <Link href="/attendance-logs" className="text-white text-decoration-none">
+            Expand
+          </Link>
+        </Button>
+      </Container>
       <table className="table table-dark table-striped">
         <thead>
           <tr>
@@ -195,6 +205,14 @@ function AttendeeListSummary({ attendees }: AttendeesInterface) {
 
   return (
     <Col md={6} className="bg-dark text-white p-2 rounded">
+      <Container className="d-flex flex-row justify-content-between">
+        <p className="fs-4">รายการนักศึกษาในวิชาเรียน</p>
+        <Button>
+          <Link href="/student-list" className="text-white text-decoration-none">
+            Expand
+          </Link>
+        </Button>
+      </Container>
       <table className="table table-dark table-striped">
         <thead>
           <tr>
