@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import "./globals.css";
+
+// import "./globals.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+
+import Navbar from "./components/navbar.tsx";
+
+import { useSelector } from "react-redux";
+import { RootState } from "./contexts/store";
+
+import ReduxProvider from "./contexts/redux_provider.tsx";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,11 +32,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = useSelector((state: RootState) => state.theme.mode);
+
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-black`}>
-        {children}
-      </body>
+      <ReduxProvider>
+        <body className={`${geistSans.variable} ${geistMono.variable} ${
+          theme === "dark" ? "bg-black" : "bg-white"
+        }`}>
+          <Navbar />
+          {children}
+        </body>
+      </ReduxProvider>
     </html>
   );
 }
