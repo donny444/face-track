@@ -1,4 +1,11 @@
-export default interface BarChartInterface {
+import { ThemeEnum } from "./enums.ts";
+
+export default interface DailyChartProps {
+  chartData: BarChartInterface;
+  themeMode: ThemeEnum;
+}
+
+interface BarChartInterface {
   labels: Array<string>,
   datasets: Array<barChartDatasetType>
 }
