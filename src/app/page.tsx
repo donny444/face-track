@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 
-import styles from "./page.module.css";
+// import styles from "./page.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Button, Col, Container, Row } from "react-bootstrap";
+
+import { useSelector } from "react-redux";
+import { RootState } from "./contexts/store";
 
 import { Bar } from "react-chartjs-2";
 import {
@@ -24,35 +27,48 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
 ChartJS.defaults.color = "#ffffff";
 
 import attendanceData from "@/data/attendance_data.json";
 import attendanceCounts from "@/data/attendance_counts.json";
 import recentAttendances from "@/data/recent_attendances.json";
 
-import BarChartInterface from "@/interfaces/bar_chart_interface.ts";
-import AttendanceCountsInterface from "@/interfaces/attendance_counts_interface.ts";
-import AttendeeInterface from "@/interfaces/attendee_interface.ts";
+import DailyChartProps from "@/interfaces/daily_chart_interface";
+import AttendanceCountsProps from "@/interfaces/attendance_counts_interface.ts";
+import AttendanceLogProps from "@/interfaces/attendance_log_interface.ts";
+import AttendeeListProps from "@/interfaces/attendee_list_interface.ts";
+import { ThemeEnum } from "@/interfaces/enums.ts"
 
 export default function Summary() {
+  const theme = useSelector((state: RootState) => state.theme.mode);
+
   return (
     <Container fluid={"md"}>
       <Row>
-        <AttendanceCountSummary countData={attendanceCounts} />
-        <DailyChartSummary chartData={attendanceData} />
+        <AttendanceCountSummary countData={attendanceCounts} themeMode={theme} />
+        <DailyChartSummary chartData={attendanceData} themeMode={theme} />
       </Row>
       <Row>
-        <AttendanceLogSummary attendees={recentAttendances} />
-        <AttendeeListSummary attendees={recentAttendances} />
+        <AttendanceLogSummary attendees={recentAttendances} themeMode={theme} />
+        <AttendeeListSummary attendees={recentAttendances} themeMode={theme} />
       </Row>
     </Container>
   );
 }
 
-function AttendanceCountSummary({ countData }: AttendanceCountsInterface) {
+function AttendanceCountSummary({ countData, themeMode }: AttendanceCountsProps) {
+  let themeBootstrap = "";
+  switch (themeMode) {
+    case ThemeEnum.DARK:
+      themeBootstrap = "bg-dark text-white";break;
+    case ThemeEnum.LIGHT:
+      themeBootstrap = "bg-light text-black";break;
+    default:
+      break;
+  }
+  
   return (
-    <Col md={4} className="bg-dark text-white p-2 rounded">
+    <Col md={4} className={`${themeBootstrap} p-2 rounded`}>
       <p className="fs-4 ms-2">สรุปบันทึกการเข้าเรียน</p>
       <Container className="d-flex flex-column justify-content-evenly h-75">
         <p className="text-success fs-5 d-flex justify-content-between">
@@ -72,11 +88,17 @@ function AttendanceCountSummary({ countData }: AttendanceCountsInterface) {
   );
 }
 
-interface DailyChartProps {
-  chartData: BarChartInterface;
-}
+function DailyChartSummary({ chartData, themeMode }: DailyChartProps) {
+  let themeBootstrap = "";
+  switch (themeMode) {
+    case ThemeEnum.DARK:
+      themeBootstrap = "bg-dark text-white";break;
+    case ThemeEnum.LIGHT:
+      themeBootstrap = "bg-light text-black";break;
+    default:
+      break;
+  }
 
-function DailyChartSummary({ chartData }: DailyChartProps) {
   const options = {
     responsive: true,
     plugins: {
@@ -89,17 +111,13 @@ function DailyChartSummary({ chartData }: DailyChartProps) {
   };
 
   return (
-    <Col md={8} className="bg-dark text-white p-2 rounded">
+    <Col md={8} className={`${themeBootstrap} p-2 rounded`}>
       <Bar options={options} data={chartData} />
     </Col>
   );
 }
 
-interface AttendeesInterface {
-  attendees: Array<AttendeeInterface>;
-}
-
-function AttendanceLogSummary({ attendees }: AttendeesInterface) {
+function AttendanceLogSummary({ attendees, themeMode }: AttendanceLogProps) {
   const startClassTime = new Date().setHours(8, 0, 0, 0);
   const lateClassTime = new Date().setHours(10, 0, 0, 0);
   const endClassTime = new Date().setHours(11, 0, 0, 0);
@@ -141,7 +159,11 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
   };
 
   return (
-    <Col md={6} className="bg-dark text-white p-2 rounded">
+    <Col md={6} className={`${themeMode === ThemeEnum.DARK
+      ? "bg-dark text-white"
+      : "bg-light text-black"}
+      p-2 rounded
+    `}>
       <Container className="d-flex flex-row justify-content-between">
         <p className="fs-4">บันทึกการเข้าเรียนล่าสุด</p>
         <Button>
@@ -150,7 +172,9 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
           </Link>
         </Button>
       </Container>
-      <table className="table table-dark table-striped">
+      <table className={`table table-striped 
+        ${themeMode === ThemeEnum.DARK ? "table-dark" : "table-light"}
+      `}>
         <thead>
           <tr>
             <th>เวลา</th>
@@ -164,7 +188,7 @@ function AttendanceLogSummary({ attendees }: AttendeesInterface) {
   );
 }
 
-function AttendeeListSummary({ attendees }: AttendeesInterface) {
+function AttendeeListSummary({ attendees, themeMode }: AttendeeListProps) {
   const startClassTime = new Date().setHours(8, 0, 0, 0);
   const lateClassTime = new Date().setHours(10, 0, 0, 0);
   const endClassTime = new Date().setHours(11, 0, 0, 0);
@@ -204,7 +228,11 @@ function AttendeeListSummary({ attendees }: AttendeesInterface) {
   };
 
   return (
-    <Col md={6} className="bg-dark text-white p-2 rounded">
+    <Col md={6} className={`${themeMode === ThemeEnum.DARK
+      ? "bg-dark text-white"
+      : "bg-light text-black"}
+      p-2 rounded
+    `}>
       <Container className="d-flex flex-row justify-content-between">
         <p className="fs-4">รายการนักศึกษาในวิชาเรียน</p>
         <Button>
@@ -213,7 +241,9 @@ function AttendeeListSummary({ attendees }: AttendeesInterface) {
           </Link>
         </Button>
       </Container>
-      <table className="table table-dark table-striped">
+      <table className={`table table-striped 
+        ${themeMode === ThemeEnum.DARK ? "table-dark" : "table-light"}
+      `}>
         <thead>
           <tr>
             <th>เลขที่</th>
