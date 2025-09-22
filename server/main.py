@@ -1,3 +1,5 @@
+import firebase_admin
+from firebase_admin import credentials, firestore
 from fastapi import FastAPI
 from pydantic import BaseModel
 import firebase_admin
@@ -6,18 +8,28 @@ from firebase_admin import credentials
 cred = credentials.Certificate("firebase.json")
 firebase_admin.initialize_app(cred)
 
+# โหลด service account key
+cred = credentials.Certificate("firebase.json")
+firebase_admin.initialize_app(cred)
+
 app = FastAPI()
 
-class Attendance(BaseModel):
-	id: str
-	firstname: str
-	lastname: str
-	datetime: str
+# Access Firestore
+db = firestore.client()
 
-@app.get("/")
-async def root():
-	return { "message": "Hello World" }
+# ---------------------------------------------------
+# Example: เพิ่มข้อมูลใน students collection
+student_ref = db.collection("students").document("65200123")
+student_ref.set({
+    "first_name": "alex",
+    "last_name": "alone",
+})
 
-@app.post("/")
-async def Attend(attendance: Attendance):
-	return None
+# Example: เพิ่มข้อมูลใน attendances collection
+attendance_ref = db.collection("attendances").document()
+attendance_ref.set({
+    "attendee_id": "3",
+    "timestamp": firestore.SERVER_TIMESTAMP
+})
+
+print("Data added to Firestore!!")
