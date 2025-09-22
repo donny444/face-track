@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# VS Code configurations
+/.vscode
+
+# Python virtual environment
+/server/.venv
+
+# Python cache
+/server/__pycache__
