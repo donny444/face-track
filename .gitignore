@@ -35,11 +35,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# VS Code configurations
+# vs Code configurations
 /.vscode
 
-# Python virtual environment
+# python virtual environment
 /server/.venv
 
-# Python cache
+# python cache
 /server/__pycache__
+
+# firebase credentials
+/server/firebase.json
