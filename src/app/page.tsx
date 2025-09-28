@@ -44,6 +44,13 @@ export default function Summary() {
 
   return (
     <Container fluid={"md"}>
+      <Row className="mb-3">
+        <Col className="d-flex justify-content-end">
+          <Link href="/register">
+            <Button variant="primary" className="me-2">Register</Button>
+          </Link>
+        </Col>
+      </Row>
       <Row>
         <AttendanceCountSummary countData={attendanceCounts} themeMode={theme} />
         <DailyChartSummary chartData={attendanceData} themeMode={theme} />
