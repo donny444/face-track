@@ -39,7 +39,7 @@ next-env.d.ts
 /.vscode
 
 # python virtual environment
-/server/.venv
+/server/face_rec
 
 # python cache
 /server/__pycache__
