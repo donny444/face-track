@@ -1,20 +1,54 @@
 import cv2
 import face_recognition
 import os
+import time
+from typing import Set
+
+import requests
 import numpy as np
+
+API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://localhost:8000")
+ATTENDANCE_ENDPOINT = f"{API_BASE_URL.rstrip('/')}/attendances/"
+
+
+def post_attendance(attendee_id: str, sent_attendances: Set[str]) -> None:
+
+    if attendee_id in sent_attendances:
+        return
+
+    payload = {
+        "attendee_id": attendee_id,
+        "timestamp": int(time.time()),
+    }
+
+    try:
+        response = requests.post(ATTENDANCE_ENDPOINT, json=payload, timeout=5)
+        response.raise_for_status()
+        sent_attendances.add(attendee_id)
+        print(f"Attendance recorded for {attendee_id}")
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 400:
+            print(f"Attendance already recorded today for {attendee_id}")
+            sent_attendances.add(attendee_id)
+        else:
+            print(f"HTTP error while posting attendance for {attendee_id}: {http_err}")
+    except requests.exceptions.RequestException as req_err:
+        print(f"Network error while posting attendance for {attendee_id}: {req_err}")
 
 # Load known faces
 known_face_encodings = []
 known_face_names = []
 
-for filename in os.listdir('Faces'):
-    if filename.endswith('.jpg') or filename.endswith('.png'):
-        img_path = os.path.join('Faces', filename)
+for filename in os.listdir('faces'):
+    if filename.lower().endswith(('.jpg', '.png')):
+        img_path = os.path.join('faces', filename)
         image = face_recognition.load_image_file(img_path)
         encoding = face_recognition.face_encodings(image)
         if encoding:
             known_face_encodings.append(encoding[0])
             known_face_names.append(os.path.splitext(filename)[0])
+
+sent_attendances: Set[str] = set()
 
 # Open camera
 cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
@@ -50,6 +84,9 @@ while True:
         if True in matches:
             first_match_index = matches.index(True)
             name = known_face_names[first_match_index]
+
+        if name != "Unknown":
+            post_attendance(name, sent_attendances)
 
         # Scale back up
         top *= 2
