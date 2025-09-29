@@ -22,15 +22,15 @@ class Student(BaseModel):
 	email: str | None = None
 	password: str | None = None
 
+# Receive and save attendance data from face recognition
 @app.post("/attendances/")
 async def Attend(attendance: Attendance):
 	attendanceDict = attendance.model_dump()
 
-
 	# Convert timestamp to UTC date (year, month, day)
-	attendance_date = datetime.fromtimestamp(attendanceDict["timestamp"], tz=timezone.utc).date()
-	startOfToday = int(datetime(attendance_date.year, attendance_date.month, attendance_date.day, tzinfo=timezone.utc).timestamp())
-	endOfToday = int(datetime(attendance_date.year, attendance_date.month, attendance_date.day, 23, 59, 59, tzinfo=timezone.utc).timestamp())
+	attendanceDate = datetime.fromtimestamp(attendanceDict["timestamp"], tz=timezone.utc).date()
+	startOfToday = int(datetime(attendanceDate.year, attendanceDate.month, attendanceDate.day, tzinfo=timezone.utc).timestamp())
+	endOfToday = int(datetime(attendanceDate.year, attendanceDate.month, attendanceDate.day, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
 	# Check if there's attendance of the student in the current day
 	existedAttendance = (
@@ -49,6 +49,7 @@ async def Attend(attendance: Attendance):
 
 	return attendanceDict, status.HTTP_201_CREATED
 
+# Student registration
 @app.post("/students/")
 async def Register(student: Student):
 	studentDict = student.model_dump()
@@ -68,7 +69,7 @@ async def Register(student: Student):
 	
 	# Create user in Firebase Authentication
 	try:
-		user = auth.create_user(
+		auth.create_user(
 			uid=studentDict["email"].split("@")[0],
 			email=studentDict["email"],
 			password=studentDict["password"],
@@ -80,7 +81,7 @@ async def Register(student: Student):
 
 	existingStudent = existingStudentRef.get()
 	
-	if existingStudent:
+	if existingStudent.exists:
 		raise HTTPException(status_code=400, detail="Student already exists")
 	
 	studentRef = db.collection("students").document(studentDict["student_id"])
@@ -93,6 +94,7 @@ async def Register(student: Student):
 
 	return studentDict, status.HTTP_201_CREATED
 
+# Remove a student from Firebase (instructor access)
 @app.delete("/students/")
 async def Remove(studentId: str):
 	# Delete user from Firebase Authentication
@@ -103,8 +105,20 @@ async def Remove(studentId: str):
 	
 	# Delete student and their attendances from Firestore
 	transaction = db.transaction()
-	transaction.delete(db.collection("attendances").where("attendee_id", "==", studentId).stream())
-	transaction.delete(db.collection("students").document(studentId))
+
+	# Retrieve all attendance documents for the student
+	attendanceQuery = db.collection("attendances").where("attendee_id", "==", studentId).stream()
+	attendanceDocs = [doc for doc in attendanceQuery]
+
+	# Use the transaction to delete each attendance document
+	for doc in attendanceDocs:
+		transaction.delete(doc.reference)
+
+	# Delete the student document
+	studentRef = db.collection("students").document(studentId)
+	transaction.delete(studentRef)
+
+	# Commit the transaction
 	transaction.commit()
 
 	return studentId, status.HTTP_204_NO_CONTENT
