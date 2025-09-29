@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FaceTrack
 
-## Getting Started
+## Stack
 
-First, run the development server:
+- **Client:** Next.js, Chart.js, Redux, Bootstrap.
+- **Server:** Python, FastAPI, Firebase.
+- **Face detection:** Raspberry Pi, OpenCV.
+- **Miscellaneous:** RealVNC.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## API Endpoints
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Method | Path | Description | Request Body | Query Parameters |
+| --- | --- | --- | --- | --- |
+| **`POST`**  | `/attendances/`  | Receive and save attendance data from face recognition. | `{
+  "attendee_id": string,
+  "timestamp": int
+}` | `-` |
+| **`DELETE`**  | `/attendances/`  | Remove a student from Firebase (instructor access.) | `{
+  "student_id": string
+}` | `-` |
+| **`GET`**  | `/attendances/` | Receive attendance log (recent/today) for displaying. | `-` | `recent: boolean`, |
+| **`GET`**  | `/students/` | Receive student list (head/all) for displaying (searching included.) | `-` | `head: boolean`,
+`search: string`, |
+| **`GET`**  | `/statuses/`  | Return counts of attendance statuses. | `-`  | `-` |
+| **`GET`**  | `/chart/`  | Return today’s attendance data that is used to form the chart. | `-`  | `-` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Resources
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+https://www.canva.com/design/DAGtgfRDLZg/_M7O38SNMZHAOUfjCm4F_w/edit
 
-## Learn More
+https://www.canva.com/design/DAGwbRT7zuA/RK5Wl46dvlmOa-1ZqA5Ktw/edit
 
-To learn more about Next.js, take a look at the following resources:
+https://github.com/donny444/face-track
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+https://pypi.org/project/firebase/
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+https://firebase.google.com/docs/reference/admin/python
 
-## Deploy on Vercel
+https://console.firebase.google.com/project/face-track-b68c8/overview
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+https://youtu.be/k38K-atV_UM
