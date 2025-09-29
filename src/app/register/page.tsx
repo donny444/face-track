@@ -2,10 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+
+import "bootstrap/dist/css/bootstrap.min.css";
 import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap'
+
 import { useSelector } from 'react-redux'
 import { RootState } from '../contexts/store'
+
 import { ThemeEnum } from '@/interfaces/enums'
+import axios from 'axios';  
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -27,14 +32,31 @@ export default function RegisterPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    try {
-      console.log('Form submitted:', formData)
-      router.push('/login')
-    } catch {
-      setError('Registration failed. Please try again.')
+  e.preventDefault()
+  try {
+    const response = await axios.post("http://localhost:8000/register", {
+      email: formData.email,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      password: formData.password
+    });
+
+    if (response.status === 200) {
+      console.log("Register success");
+      router.push("/login");
+    }
+  } catch (error) {
+    console.error(error);
+    if (axios.isAxiosError(error) && error.response) {
+      // ถ้ามี error response จาก server
+      setError(error.response.data.error || "Registration failed");
+    } else {
+      // ถ้าเป็น error อื่นๆ
+      setError("Registration failed. Please try again.");
     }
   }
+}
+
 
   return (
     <Container fluid className={`min-vh-100 ${theme === ThemeEnum.DARK ? 'bg-dark' : 'bg-light'} d-flex align-items-center justify-content-center`}>

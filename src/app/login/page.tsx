@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap'
-import { useSelector } from 'react-redux'
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap'
+
+import { useSelector } from 'react-redux'
 import { RootState } from '../contexts/store'
+
 import { ThemeEnum } from '@/interfaces/enums'
 
 export default function LoginPage() {
