@@ -1,15 +1,25 @@
 from fastapi import FastAPI, HTTPException, status
-from pydantic import BaseModel
-import firebase_admin
+from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import auth, credentials, firestore
+from pydantic import BaseModel
 from datetime import datetime, timezone
 from google.cloud.firestore_v1 import FieldFilter
 
+# โหลด service account key
 cred = credentials.Certificate("firebase.json")
 firebase_admin.initialize_app(cred)
 
 app = FastAPI()
 db = firestore.client()
+
+# เพิ่ม CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # หรือ domain ของ frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # อนุญาตทุก HTTP methods
+    allow_headers=["*"],  # อนุญาตทุก headers
+)
 
 class Attendance(BaseModel):
 	attendee_id: str
@@ -122,3 +132,12 @@ async def Remove(studentId: str):
 	transaction.commit()
 
 	return studentId, status.HTTP_204_NO_CONTENT
+
+# Retreive all attendees in the current day/class
+@app.get("/attendances/")
+async def GetAll():
+    docs = db.collection("attendances").stream()
+    result = []
+    for doc in docs:
+        result.append(doc.to_dict())
+    return result
