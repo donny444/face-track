@@ -1,5 +1,5 @@
 import firebase_admin
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, auth
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -88,3 +88,29 @@ async def user(data: RegisterModel):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# -----------------------------
+# Pydantic Model สำหรับ Login
+class LoginModel(BaseModel):
+    email: str
+    password: str
+
+# API สำหรับเข้าสู่ระบบ
+@app.post("/login")
+async def login(data: LoginModel):
+    try:
+        # ตรวจสอบ credentials กับ Firebase Auth
+        user = auth.get_user_by_email(data.email)
+        
+        # เช็คว่าเป็นอีเมลของอาจารย์หรือไม่
+        is_teacher = data.email == "silar@kmitl.ac.th"
+        
+        # ส่งข้อมูลกลับ
+        return {
+            "id": user.uid,
+            "name": user.display_name or "อาจารย์",  # หรือดึงชื่อจาก Firestore
+            "email": user.email,
+            "isTeacher": is_teacher
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid credentials")

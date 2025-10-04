@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useDispatch } from 'react-redux'
+import { login } from '../contexts/store/auth_slice'
+import axios from 'axios'
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap'
@@ -13,7 +16,7 @@ import { ThemeEnum } from '@/interfaces/enums'
 
 export default function LoginPage() {
   const router = useRouter()
-  
+  const dispatch = useDispatch()
   const theme = useSelector((state: RootState) => state.theme.mode)
   const [formData, setFormData] = useState({
     email: '',
@@ -32,10 +35,23 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
-      // Here you would handle login logic
-      console.log('Login attempt:', formData)
-      router.push('/') // Redirect to dashboard after login
-    } catch {
+      const response = await axios.post('http://localhost:8000/login', {
+        email: formData.email,
+        password: formData.password
+      })
+
+      if (response.status === 200) {
+        // ถ้า login สำเร็จ
+        dispatch(login({
+          id: response.data.id,
+          name: response.data.name,
+          email: formData.email,
+          isTeacher: response.data.isTeacher
+        }))
+        router.push('/')
+      }
+    } catch (error) {
+      console.error(error)
       setError('เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง')
     }
   }
