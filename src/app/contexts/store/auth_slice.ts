@@ -6,6 +6,7 @@ interface AuthState {
     id: string;
     name: string;
     email: string;
+    isTeacher: boolean;  // เพิ่ม field นี้
   } | null;
 }
 
@@ -18,7 +19,12 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ id: string; name: string; email: string }>) => {
+    login: (state, action: PayloadAction<{ 
+      id: string; 
+      name: string; 
+      email: string;
+      isTeacher: boolean;  // เพิ่ม field นี้
+    }>) => {
       state.isAuthenticated = true;
       state.user = action.payload;
     },
