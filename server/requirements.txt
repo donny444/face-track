@@ -6,3 +6,5 @@ opencv-python
 face-recognition
 numpy
 requests
+opencv-python
+face_recognition
