@@ -47,7 +47,7 @@ async def Attend(attendance: Attendance):
 	# Check if there's attendance of the student in the current day
 	existedAttendance = (
 		db.collection("attendances") \
-		.where("attendee_id", "==", attendanceDict["attendee_id"]) \
+		.where(filter=FieldFilter("attendee_id", "==", attendanceDict["attendee_id"])) \
 		.where(filter=FieldFilter("timestamp", ">=", startOfToday)) \
 		.where(filter=FieldFilter("timestamp", "<=", endOfToday)) \
 		.stream()

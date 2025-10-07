@@ -39,7 +39,7 @@ next-env.d.ts
 /.vscode
 
 # python virtual environment
-/server/.venv
+/server/face_rec
 
 # python cache
 /server/__pycache__
@@ -47,5 +47,5 @@ next-env.d.ts
 # firebase credentials
 /server/firebase.json
 
-# people face images
-/server/faces
+# people faces
+/server/Faces
