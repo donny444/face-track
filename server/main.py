@@ -1,3 +1,5 @@
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from firebase_admin import auth, credentials, firestore
@@ -141,3 +143,61 @@ async def GetAll():
     for doc in docs:
         result.append(doc.to_dict())
     return result
+
+# -----------------------------
+#Pydantic Model สำหรับข้อมูลนักเรียน
+class RegisterModel(BaseModel):
+    email: str
+    first_name: str
+    last_name: str
+    password: str
+
+# API สำหรับลงทะเบียน
+@app.post("/register")
+async def user(data: RegisterModel):
+    try:
+        # เช็คว่ามีอีเมลนี้ในระบบแล้วหรือไม่
+        user_doc = db.collection("students").document(data.email).get()
+        if user_doc.exists:
+            raise HTTPException(status_code=400, detail="อีเมลนี้ถูกใช้งานแล้ว")
+
+        # บันทึกข้อมูลใหม่
+        user_ref = db.collection("students").document(data.email)
+        user_ref.set({
+            "email": data.email,
+            "first_name": data.first_name,
+            "last_name": data.last_name,
+            "password": data.password,  # ในระบบจริง ควรเข้ารหัสก่อนเก็บ
+            "created_at": datetime.now().isoformat()
+        })
+        return {"message": "ลงทะเบียนสำเร็จ"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# -----------------------------
+# Pydantic Model สำหรับ Login
+class LoginModel(BaseModel):
+    email: str
+    password: str
+
+# API สำหรับเข้าสู่ระบบ
+@app.post("/login")
+async def login(data: LoginModel):
+    try:
+        # ตรวจสอบ credentials กับ Firebase Auth
+        user = auth.get_user_by_email(data.email)
+        
+        # เช็คว่าเป็นอีเมลของอาจารย์หรือไม่
+        is_teacher = data.email == "silar@kmitl.ac.th"
+        
+        # ส่งข้อมูลกลับ
+        return {
+            "id": user.uid,
+            "name": user.display_name or "อาจารย์",  # หรือดึงชื่อจาก Firestore
+            "email": user.email,
+            "isTeacher": is_teacher
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid credentials")

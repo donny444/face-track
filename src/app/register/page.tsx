@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image';
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap'
@@ -22,7 +23,9 @@ export default function RegisterPage() {
     password: '',
   })
   const [error, setError] = useState('')
-
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string>('')
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({
@@ -31,31 +34,64 @@ export default function RegisterPage() {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  e.preventDefault()
-  try {
-    const response = await axios.post("http://localhost:8000/register", {
-      email: formData.email,
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      password: formData.password
-    });
-
-    if (response.status === 200) {
-      console.log("Register success");
-      router.push("/login");
-    }
-  } catch (error) {
-    console.error(error);
-    if (axios.isAxiosError(error) && error.response) {
-      // ถ้ามี error response จาก server
-      setError(error.response.data.error || "Registration failed");
-    } else {
-      // ถ้าเป็น error อื่นๆ
-      setError("Registration failed. Please try again.");
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // เช็คนามสกุลไฟล์
+      const fileType = file.type
+      if (!fileType.includes('jpeg') && !fileType.includes('jpg') && !fileType.includes('png')) {
+        setError('กรุณาอัพโหลดไฟล์ .jpg หรือ .png เท่านั้น')
+        return
+      }
+      
+      // สร้าง preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+      
+      setImageFile(file)
+      setError('')
     }
   }
-}
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    try {
+      const formDataWithImage = new FormData()
+      formDataWithImage.append('email', formData.email)
+      formDataWithImage.append('first_name', formData.firstName)
+      formDataWithImage.append('last_name', formData.lastName)
+      formDataWithImage.append('password', formData.password)
+      if (imageFile) {
+        formDataWithImage.append('image', imageFile)
+      }
+
+      const response = await axios.post("http://localhost:8000/register", 
+        formDataWithImage,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Register success");
+        router.push("/login");
+      }
+    } catch (error) {
+      console.error(error);
+      if (axios.isAxiosError(error) && error.response) {
+        // ถ้ามี error response จาก server
+        setError(error.response.data.error || "Registration failed");
+      } else {
+        // ถ้าเป็น error อื่นๆ
+        setError("Registration failed. Please try again.");
+      }
+    }
+  }
 
 
   return (
@@ -132,6 +168,35 @@ export default function RegisterPage() {
                   required
                   className={`form-control-lg ${theme === ThemeEnum.DARK ? 'bg-dark text-white' : ''}`}
                 />
+              </Form.Group>
+
+              <Form.Group className="mb-4">
+                <Form.Label className={theme === ThemeEnum.DARK ? 'text-white' : 'text-black'}>
+                  กรุณาอัพโหลดไฟล์รูปภาพ
+                </Form.Label>
+                <div className={`small mb-2 ${theme === ThemeEnum.DARK ? 'text-light' : 'text-muted'}`}>
+                  รองรับไฟล์ .jpg และ .png เท่านั้น
+                </div>
+                <Form.Control
+                  type="file"
+                  accept=".jpg,.jpeg,.png"
+                  onChange={handleImageChange}
+                  className={`form-control-lg ${theme === ThemeEnum.DARK ? 'bg-dark text-white' : ''}`}
+                />
+                {imagePreview && (
+                  <div className="mt-2 text-center">
+                    <Image 
+                      src={imagePreview}
+                      alt="Preview"
+                      width={200}
+                      height={200}
+                      style={{ 
+                        borderRadius: '8px',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                )}
               </Form.Group>
 
               <Button 
