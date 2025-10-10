@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [loading, setLoading] = useState(false)
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -55,41 +56,80 @@ export default function RegisterPage() {
       setError('')
     }
   }
-
+ 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setLoading(true)
+    setError('')
+    // ตรวจาสอบอีเมล
+    if(!formData.email.endsWith('@kmitl.ac.th')){
+      setError('กรุณาใช้อีเมล @kmitl.ac.th ในการสมัครสมาชิก');
+      setLoading(false) //หยุดสถานะ loading
+      return; //ออกจากฟังชั่น ไม่ต้องทำต่อ
+    }
     try {
-      const formDataWithImage = new FormData()
-      formDataWithImage.append('email', formData.email)
-      formDataWithImage.append('first_name', formData.firstName)
-      formDataWithImage.append('last_name', formData.lastName)
-      formDataWithImage.append('password', formData.password)
-      if (imageFile) {
-        formDataWithImage.append('image', imageFile)
+      // เช็คว่ามีการอัพโหลดรูปภาพหรือไม่
+      if (!imageFile) {
+        setError('กรุณาอัพโหลดรูปภาพ');
+        setLoading(false); //เพิ่ม setloading(false)
+        return;
       }
 
-      const response = await axios.post("http://localhost:8000/register", 
-        formDataWithImage,
+      console.log('Starting registration...');
+      console.log('Form data:', formData);
+      console.log('Image file:', imageFile);
+
+      const formDataToSend = new FormData()
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('first_name', formData.firstName)
+      formDataToSend.append('last_name', formData.lastName)
+      formDataToSend.append('password', formData.password)
+      if (imageFile) {
+        formDataToSend.append('image', imageFile)
+      }
+
+      // เพิ่ม console.log ก่อนส่ง request
+      console.log('Sending request to server...');
+
+      const response = await axios.post(
+        "http://localhost:8000/register",
+        formDataToSend,
         {
           headers: {
             'Content-Type': 'multipart/form-data'
-          }
+          },
+          // เพิ่ม timeout
+          timeout: 10000,
         }
       );
 
+      // เพิ่ม console.log หลังได้รับ response
+      console.log('Server response:', response);
+
       if (response.status === 200) {
-        console.log("Register success");
-        router.push("/login");
+        alert('ลงทะเบียนสำเร็จ')
+        router.push('/login')
       }
     } catch (error) {
-      console.error(error);
-      if (axios.isAxiosError(error) && error.response) {
-        // ถ้ามี error response จาก server
-        setError(error.response.data.error || "Registration failed");
+      // ปรับปรุงการจัดการ error
+      console.error('Registration error:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // มี response จาก server แต่เป็น error
+          setError(`เกิดข้อผิดพลาด: ${error.response.data.detail || error.message}`);
+        } else if (error.request) {
+          // ส่ง request แล้วแต่ไม่ได้รับ response
+          setError('ไม่สามารถติดต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง');
+        } else {
+          // มีข้อผิดพลาดในการสร้าง request
+          setError(`เกิดข้อผิดพลาด: ${error.message}`);
+        }
       } else {
-        // ถ้าเป็น error อื่นๆ
-        setError("Registration failed. Please try again.");
+        // error อื่นๆ
+        setError('เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ กรุณาลองใหม่อีกครั้ง');
       }
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -104,7 +144,10 @@ export default function RegisterPage() {
             </h2>
             
             {error && (
-              <Alert variant="danger" className="mb-3">
+              <Alert 
+                variant={error === 'กำลังดำเนินการ...' ? 'info' : 'danger'} 
+                className="mb-3"
+              >
                 {error}
               </Alert>
             )}
@@ -181,6 +224,7 @@ export default function RegisterPage() {
                   type="file"
                   accept=".jpg,.jpeg,.png"
                   onChange={handleImageChange}
+                  required // เพิ่ม required attribute
                   className={`form-control-lg ${theme === ThemeEnum.DARK ? 'bg-dark text-white' : ''}`}
                 />
                 {imagePreview && (
@@ -204,8 +248,9 @@ export default function RegisterPage() {
                 type="submit" 
                 className="w-100 mb-3 py-2"
                 size="lg"
+                disabled={loading} // Disable button when loading
               >
-                สมัครสมาชิก
+                {loading ? 'กำลังดำเนินการ...' : 'สมัครสมาชิก'}
               </Button>
             </Form>
           </div>
