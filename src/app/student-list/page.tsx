@@ -8,8 +8,14 @@ import { useSelector } from "react-redux";
 import { RootState } from "../contexts/store";
 import { ThemeEnum } from "@/interfaces/enums";
 import Link from "next/link";
+import axios from "axios";
 
-// Mock data
+interface Student {
+	student_id: string;
+	first_name: string;
+	last_name: string;
+}
+
 const mockStudents = [
 	{
 		student_id: "6501234",
@@ -41,10 +47,12 @@ const mockStudents = [
 export default function StudentList() {
 	const router = useRouter();
 	const theme = useSelector((state: RootState) => state.theme.mode);
-	const auth = useSelector((state: RootState) => state.auth);
+	const auth = useSelector((state: RootState) => state.auth) as RootState["auth"];
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
-	const [students, setStudents] = useState(mockStudents);
+	const [students, setStudents] = useState<Student[]>(mockStudents);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
 
 	// เช็ค authentication
 	useEffect(() => {
@@ -53,6 +61,23 @@ export default function StudentList() {
 			return;
 		}
 	}, [auth.isAuthenticated, auth.user, router]);
+
+	// ดึงข้อมูลนักเรียน
+	useEffect(() => {
+		const fetchStudents = async () => {
+			try {
+				const response = await axios.get("http://localhost:8000/students/");
+				setStudents(response.data);
+			} catch (error) {
+				console.error("Error fetching students:", error);
+				setError("ไม่สามารถโหลดข้อมูลได้");
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchStudents();
+	}, []);
 
 	const handleDelete = (studentId: string) => {
 		// เช็คว่าเป็นอาจารย์หรือไม่
@@ -64,15 +89,31 @@ export default function StudentList() {
 		setShowConfirmModal(true);
 	};
 
-	const confirmDelete = () => {
+	const confirmDelete = async () => {
 		if (selectedStudent) {
-			setStudents(
-				students.filter(
-					(student) => student.student_id !== selectedStudent
-				)
-			);
-			setShowConfirmModal(false);
-			setSelectedStudent(null);
+			try {
+				// เปลี่ยนวิธีการส่ง studentId
+				const response = await axios.delete(
+					`http://localhost:8000/students/${selectedStudent}`
+				);
+
+				if (response.status === 200) {
+					setStudents(
+						students.filter(
+							(student) => student.student_id !== selectedStudent
+						)
+					);
+					setShowConfirmModal(false);
+					setSelectedStudent(null);
+				}
+			} catch (error) {
+				console.error("Error deleting student:", error);
+				if (axios.isAxiosError(error)) {
+					const errorMessage =
+						error.response?.data?.detail || "ไม่สามารถลบข้อมูลได้";
+					alert(errorMessage);
+				}
+			}
 		}
 	};
 
@@ -96,6 +137,24 @@ export default function StudentList() {
 	// ถ้ายังไม่ authenticated ให้แสดงหน้าว่าง
 	if (!auth.isAuthenticated || !auth.user) {
 		return null;
+	}
+
+	// แสดงผลขณะโหลดข้อมูล
+	if (loading) {
+		return (
+			<Container fluid className="mt-4">
+				<div className="text-center">กำลังโหลดข้อมูล...</div>
+			</Container>
+		);
+	}
+
+	// แสดงผลเมื่อเกิดข้อผิดพลาด
+	if (error) {
+		return (
+			<Container fluid className="mt-4">
+				<div className="text-center text-danger">{error}</div>
+			</Container>
+		);
 	}
 
 	return (
