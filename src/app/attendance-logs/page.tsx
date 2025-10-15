@@ -1,53 +1,49 @@
 "use client";
 
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Container, Row, Alert } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { useSelector } from "react-redux";
 import { RootState } from "../contexts/store";
 import { ThemeEnum } from "@/interfaces/enums";
 import Link from "next/link";
 
-// Mock data
-const mockAttendances = [
-	{
-		datetime: "2025-09-29T08:15:00",
-		first_name: "สมชาย",
-		last_name: "ใจดี",
-	},
-	{
-		datetime: "2025-09-29T08:30:00",
-		first_name: "สมหญิง",
-		last_name: "รักเรียน",
-	},
-	{
-		datetime: "2025-09-29T10:15:00",
-		first_name: "วิชัย",
-		last_name: "ขยันดี",
-	},
-	{
-		datetime: "2025-09-29T11:30:00",
-		first_name: "มานี",
-		last_name: "มีสุข",
-	},
-	{
-		datetime: "2025-09-29T08:45:00",
-		first_name: "สุดา",
-		last_name: "ตั้งใจ",
-	},
-];
+interface Attendance {
+	attendee_id: string;
+	timestamp: number;
+	first_name?: string;
+	last_name?: string;
+}
 
 export default function AttendanceLogs() {
 	const theme = useSelector((state: RootState) => state.theme.mode);
+	const [attendances, setAttendances] = useState<Attendance[]>([]);
+	const [error, setError] = useState<string>("");
+
+	useEffect(() => {
+		const fetchAttendances = async () => {
+			try {
+				const response = await axios.get("http://localhost:8000/attendances/");
+				setAttendances(response.data);
+			} catch (error) {
+				console.error("Error fetching attendances:", error);
+				setError("ไม่สามารถโหลดข้อมูลได้");
+			}
+		};
+		fetchAttendances();
+	}, []);
+
 	const startClassTime = new Date().setHours(8, 0, 0, 0);
 	const lateClassTime = new Date().setHours(10, 0, 0, 0);
 	const endClassTime = new Date().setHours(11, 0, 0, 0);
 
-	const attendanceRows = mockAttendances.map((attendance, index) => {
-		const attendanceTime = new Date(attendance.datetime).getTime();
+	const attendanceRows = attendances.map((attendance, index) => {
+		const attendanceTime = attendance.timestamp * 1000; // Convert to milliseconds
 		return (
 			<tr key={index}>
 				<td>
-					{new Date(attendance.datetime).toLocaleString("th-TH", {
+					{new Date(attendanceTime).toLocaleString("th-TH", {
 						hour: "2-digit",
 						minute: "2-digit",
 						second: "2-digit",
@@ -73,6 +69,19 @@ export default function AttendanceLogs() {
 
 	return (
 		<Container fluid className="mt-4">
+			{error && (
+				<Row>
+					<Col>
+						<Alert
+							variant="danger"
+							dismissible
+							onClose={() => setError("")}
+						>
+							{error}
+						</Alert>
+					</Col>
+				</Row>
+			)}
 			<Row className="mb-3">
 				<Col>
 					<Link href="/">

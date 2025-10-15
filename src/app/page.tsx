@@ -50,6 +50,55 @@ import { ThemeEnum } from "@/interfaces/enums.ts";
 
 export default function Summary() {
   const theme = useSelector((state: RootState) => state.theme.mode);
+  const [realTimeData, setRealTimeData] = useState({
+  attendanceData: [],
+  attendanceCounts: [],
+  recentAttendances: []
+});
+const [students, setStudents] = useState<Student[]>([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [dashboardResponse, studentsResponse, attendancesResponse] = await Promise.all([
+        axios.get("http://localhost:8000/dashboard/"),
+        axios.get("http://localhost:8000/students/"),
+        axios.get("http://localhost:8000/attendances/")
+      ]);
+
+       setRealTimeData({
+        attendanceData: dashboardResponse.data.attendanceData,
+        attendanceCounts: dashboardResponse.data.attendanceCounts,
+        recentAttendances: attendancesResponse.data.slice(-5)
+      });
+      // รวมข้อมูล dashboard และ attendance
+      setRealTimeData({
+        attendanceData: dashboardResponse.data.attendanceData,
+        attendanceCounts: dashboardResponse.data.attendanceCounts,
+        recentAttendances: attendancesResponse.data.slice(-5)
+      });
+      setStudents(studentsResponse.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("ไม่สามารถโหลดข้อมูลได้");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
+
+  if (loading) {
+    return <div>กำลังโหลดข้อมูล...</div>;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return (
     <Container fluid={"md"}>
