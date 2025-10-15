@@ -47,4 +47,5 @@ next-env.d.ts
 # firebase credentials
 /server/firebase.json
 
-/server/public_uploads
+# people faces
+/server/Faces

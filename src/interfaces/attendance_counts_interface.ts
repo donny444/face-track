@@ -1,11 +1,13 @@
 import { ThemeEnum } from "./enums.ts";
 
-export default interface AttendanceCountsProps {
+export interface AttendanceCountsProps {
   countData: Array<AttendanceCountsType>,
   themeMode: ThemeEnum
 }
 
-type AttendanceCountsType = {
+export type AttendanceCountsArray = Array<AttendanceCountsType | null>;
+
+export type AttendanceCountsType = {
   status: string,
   count: number
 }
