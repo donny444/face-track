@@ -1,11 +1,16 @@
-import firebase_admin
-from firebase_admin import credentials, firestore, auth
-from fastapi import FastAPI, HTTPException, status
+import os
+from datetime import datetime, timezone, timedelta
+
+from dotenv import load_dotenv
+import jwt
+from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
+import firebase_admin
 from firebase_admin import auth, credentials, firestore
-from pydantic import BaseModel
-from datetime import datetime, timezone
 from google.cloud.firestore_v1 import FieldFilter
+from pydantic import BaseModel
+
+from auth_middleware import AuthMiddleware, JWT_SECRET_KEY, JWT_ALGORITHM, EXEMPT_ROUTES
 
 # โหลด service account key
 cred = credentials.Certificate("firebase.json")
@@ -13,6 +18,17 @@ firebase_admin.initialize_app(cred)
 
 app = FastAPI()
 db = firestore.client()
+
+app.add_middleware(
+	AuthMiddleware,
+	exempt_paths=EXEMPT_ROUTES
+)
+
+load_dotenv(".env.local")
+TOKEN_TTL_MINUTES = int(os.getenv("JWT_TOKEN_TTL_MINUTES", "60"))
+VALID_EMAIL_DOMAIN = os.getenv("VALID_EMAIL_DOMAIN", "@kmitl.ac.th")
+if not (TOKEN_TTL_MINUTES and VALID_EMAIL_DOMAIN):
+    raise RuntimeWarning("environment variables not found")
 
 # เพิ่ม CORS middleware
 app.add_middleware(
@@ -25,29 +41,43 @@ app.add_middleware(
 
 class Attendance(BaseModel):
 	attendee_id: str
-	timestamp: int
+	timestamp: int | None = 0
+
+class Attendee(Attendance):
+	first_name: str | None = "Unknown"
+	last_name: str | None = "Unknown"
 
 class Student(BaseModel):
-	student_id: str
-	first_name: str
-	last_name: str
-	email: str | None = None
+	email: str
+	student_id: str | None = None
+	first_name: str | None = None
+	last_name: str | None = None
+	password: str | None = None
+
+class Instructor(BaseModel):
+	email: str
+	first_name: str | None = None
+	last_name: str | None = None
 	password: str | None = None
 
 # Receive and save attendance data from face recognition
-@app.post("/attendances/")
+@app.post("/attendances/", status_code=status.HTTP_201_CREATED)
 async def Attend(attendance: Attendance):
-	attendanceDict = attendance.model_dump()
+	attendeeId = attendance.attendee_id
+	if not attendeeId:
+		raise HTTPException(status_code=400, detail="attendeeId is required in the request body")
+
+	timestamp = int(datetime.now(tz=timezone.utc).timestamp())
 
 	# Convert timestamp to UTC date (year, month, day)
-	attendanceDate = datetime.fromtimestamp(attendanceDict["timestamp"], tz=timezone.utc).date()
+	attendanceDate = datetime.fromtimestamp(timestamp, tz=timezone.utc).date()
 	startOfToday = int(datetime(attendanceDate.year, attendanceDate.month, attendanceDate.day, tzinfo=timezone.utc).timestamp())
 	endOfToday = int(datetime(attendanceDate.year, attendanceDate.month, attendanceDate.day, 23, 59, 59, tzinfo=timezone.utc).timestamp())
 
 	# Check if there's attendance of the student in the current day
 	existedAttendance = (
 		db.collection("attendances") \
-		.where(filter=FieldFilter("attendee_id", "==", attendanceDict["attendee_id"])) \
+		.where(filter=FieldFilter("attendee_id", "==", attendeeId)) \
 		.where(filter=FieldFilter("timestamp", ">=", startOfToday)) \
 		.where(filter=FieldFilter("timestamp", "<=", endOfToday)) \
 		.stream()
@@ -56,19 +86,33 @@ async def Attend(attendance: Attendance):
 	if existedAttendance:
 		raise HTTPException(status_code=400, detail="The student is already attended for today")
 
+	# attendanceDict = {
+	# 	"attendee_id": attendeeId,
+	# 	"timestamp": timestamp,
+	# }
+	# attendanceData = Attendance(
+	# 	attendee_id=attendeeId,
+	# 	timestamp=timestamp
+	# )
+	attendance.timestamp = timestamp
+	attendanceDict = attendance.model_dump()
+
 	attendanceRef = db.collection("attendances").document()
 	attendanceRef.set(attendanceDict)
 
-	return attendanceDict, status.HTTP_201_CREATED
+	return {
+		"message": "Attendance recorded successfully",
+		"data": attendanceDict
+	}
 
 # Student registration
-@app.post("/students/")
+@app.post("/students/", status_code=status.HTTP_201_CREATED)
 async def Register(student: Student):
 	studentDict = student.model_dump()
 
 	# Email and password are mandatory for Firebase Auth
 	if (studentDict["email"] is None) or (studentDict["password"] is None):
-		raise HTTPException(status_code=400, detail="Email and password are required for registration")
+		raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and password are required for registration")
 	
 	# First name and last name are mandatory for Firestore
 	if (studentDict["first_name"] is None) or (studentDict["last_name"] is None):
@@ -96,22 +140,73 @@ async def Register(student: Student):
 	if existingStudent.exists:
 		raise HTTPException(status_code=400, detail="Student already exists")
 	
+	studentName = {
+		"first_name": studentDict["first_name"],
+		"last_name": studentDict["last_name"],
+	}
+	
 	studentRef = db.collection("students").document(studentDict["student_id"])
-	studentRef.set(
-		{
-			"first_name": studentDict["first_name"],
-			"last_name": studentDict["last_name"],
-		}
-	)
+	studentRef.set(studentName)
 
-	return studentDict, status.HTTP_201_CREATED
+	return { "message": "Student registered successfully" }
+
+# Login (for instructor)
+@app.post("/login/", status_code=status.HTTP_200_OK)
+async def Login(instructor: Instructor):
+	instructorDict = instructor.model_dump()
+
+	if (instructorDict["email"] is None) or (instructorDict["password"] is None):
+		raise HTTPException(status_code=400, detail="Email and password are required for login")
+
+	try:
+		auth.get_user_by_email(instructorDict["email"])
+	except auth.UserNotFoundError:
+		raise HTTPException(status_code=404, detail="User not found")
+	except Exception as e:
+		raise HTTPException(status_code=400, detail=str(e))
+
+	instructorDocs = list(
+		db.collection("instructors")
+		.where("email", "==", instructorDict["email"])
+		.limit(1)
+		.stream()
+	)
+	if not instructorDocs:
+		raise HTTPException(status_code=404, detail="Instructor not found")
+
+	instructorDoc = instructorDocs[0]
+	tokenPayload = {
+		"sub": instructorDoc.id,
+		"email": instructorDict["email"],
+		"iat": int(datetime.now(tz=timezone.utc).timestamp()),
+		"exp": int((datetime.now(tz=timezone.utc) + timedelta(minutes=TOKEN_TTL_MINUTES)).timestamp()),
+	}
+
+	token = jwt.encode(tokenPayload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+	instructorDict = instructorDoc.to_dict()
+
+	return {
+		"message": "Login successful",
+		"data": instructorDict,
+		"token": token
+	}
 
 # Remove a student from Firebase (instructor access)
-@app.delete("/students/")
-async def Remove(studentId: str):
+@app.delete("/students/", status_code=status.HTTP_200_OK)
+async def Remove(student: Student):
+	studentDict = student.model_dump()
+	studentId = studentDict["student_id"]
+
+	if not studentId:
+		raise HTTPException(status_code=400, detail="ID of a student is required for removal")
+
 	# Delete user from Firebase Authentication
 	try:
-		auth.delete_user(f"{studentId}")
+		uid = auth.get_user_by_email(f"{studentId}" + VALID_EMAIL_DOMAIN).uid
+		# print("Deleting user with UID:", uid)
+		auth.delete_user(uid)
+	except auth.UserNotFoundError:
+		raise HTTPException(status_code=404, detail="User not found")
 	except Exception as e:
 		raise HTTPException(status_code=400, detail=str(e))
 	
@@ -119,7 +214,7 @@ async def Remove(studentId: str):
 	transaction = db.transaction()
 
 	# Retrieve all attendance documents for the student
-	attendanceQuery = db.collection("attendances").where("attendee_id", "==", studentId).stream()
+	attendanceQuery = db.collection("attendances").where("student_id", "==", studentId).stream()
 	attendanceDocs = [doc for doc in attendanceQuery]
 
 	# Use the transaction to delete each attendance document
@@ -133,71 +228,120 @@ async def Remove(studentId: str):
 	# Commit the transaction
 	transaction.commit()
 
-	return studentId, status.HTTP_204_NO_CONTENT
+	return { "message": "Student and their attendances deleted successfully" }
 
-# Retreive all attendees in the current day/class
-@app.get("/attendances/")
-async def GetAll():
-    docs = db.collection("attendances").stream()
-    result = []
-    for doc in docs:
-        result.append(doc.to_dict())
-    return result
+# Retrieve attendees in the current day/class sorted descendingly by timestamp
+@app.get("/attendances/", status_code=status.HTTP_200_OK)
+async def GetAttendances(recent: bool = Query(False)):
+	now = datetime.now(timezone.utc)
+	startOfToday = int(datetime(now.year, now.month, now.day, tzinfo=timezone.utc).timestamp())
+	endOfToday = int(datetime(now.year, now.month, now.day, 23, 59, 59, tzinfo=timezone.utc).timestamp())
+	docs = (db.collection("attendances") \
+		.where(filter=FieldFilter("timestamp", ">=", startOfToday)) \
+		.where(filter=FieldFilter("timestamp", "<=", endOfToday)) \
+		.order_by("timestamp", direction=firestore.Query.DESCENDING) \
+	)
+	if recent:
+		docs = docs.limit(5)
+	docs = docs.stream()
 
-# -----------------------------
-#Pydantic Model สำหรับข้อมูลนักเรียน
-class RegisterModel(BaseModel):
-    email: str
-    first_name: str
-    last_name: str
-    password: str
 
-# API สำหรับลงทะเบียน
-@app.post("/register")
-async def user(data: RegisterModel):
-    try:
-        # เช็คว่ามีอีเมลนี้ในระบบแล้วหรือไม่
-        user_doc = db.collection("students").document(data.email).get()
-        if user_doc.exists:
-            raise HTTPException(status_code=400, detail="อีเมลนี้ถูกใช้งานแล้ว")
+	result = []
+	for doc in docs:
+		attendance = doc.to_dict()
 
-        # บันทึกข้อมูลใหม่
-        user_ref = db.collection("students").document(data.email)
-        user_ref.set({
-            "email": data.email,
-            "first_name": data.first_name,
-            "last_name": data.last_name,
-            "password": data.password,  # ในระบบจริง ควรเข้ารหัสก่อนเก็บ
-            "created_at": datetime.now().isoformat()
-        })
-        return {"message": "ลงทะเบียนสำเร็จ"}
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+		if type(attendance["timestamp"]) is not int:
+			attendance["timestamp"] = 0
+		
+		if "attendee_id" not in attendance:
+			attendance["first_name"] = "Unknown"
+			attendance["last_name"] = "Unknown"
+			attendance["attendee_id"] = "Unknown"
+		else:
+			studentRef = db.collection("students").document(attendance["attendee_id"])
+			studentDoc = studentRef.get()
+			if studentDoc.exists:
+				student = studentDoc.to_dict()
+				attendance["first_name"] = student["first_name"]
+				attendance["last_name"] = student["last_name"]
+			else:
+				attendance["first_name"] = "Unknown"
+				attendance["last_name"] = "Unknown"
 
-# -----------------------------
-# Pydantic Model สำหรับ Login
-class LoginModel(BaseModel):
-    email: str
-    password: str
+		doc = Attendee(**attendance)
+		docDict = doc.model_dump()
+		result.append(docDict)
+	
+	return {
+		"message": "Today's attendances retrieved successfully",
+		"data": result
+	}
 
-# API สำหรับเข้าสู่ระบบ
-@app.post("/login")
-async def login(data: LoginModel):
-    try:
-        # ตรวจสอบ credentials กับ Firebase Auth
-        user = auth.get_user_by_email(data.email)
-        
-        # เช็คว่าเป็นอีเมลของอาจารย์หรือไม่
-        is_teacher = data.email == "silar@kmitl.ac.th"
-        
-        # ส่งข้อมูลกลับ
-        return {
-            "id": user.uid,
-            "name": user.display_name or "อาจารย์",  # หรือดึงชื่อจาก Firestore
-            "email": user.email,
-            "isTeacher": is_teacher
-        }
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+# Retrieve list of all students registered in the class
+@app.get("/students/", status_code=status.HTTP_200_OK)
+async def GetStudents(head: bool = Query(True), search: str = Query(None)):
+	now = datetime.now(timezone.utc)
+	startOfToday = int(datetime(now.year, now.month, now.day, tzinfo=timezone.utc).timestamp())
+	endOfToday = int(datetime(now.year, now.month, now.day, 23, 59, 59, tzinfo=timezone.utc).timestamp())
+
+	students = (db.collection("students"))
+	if head:
+		students = students.limit(5)
+	students = students.stream()
+
+	result = []
+	for student in students:
+		studentDict = student.to_dict()
+		studentDict["attendee_id"] = str(student.id)
+
+		attendances = list(db.collection("attendances") \
+			.where(filter=FieldFilter("attendee_id", "==", str(student.id))) \
+			.where(filter=FieldFilter("timestamp", ">=", startOfToday)) \
+			.where(filter=FieldFilter("timestamp", "<=", endOfToday)) \
+			.limit(1) \
+			.stream()
+		)
+		attendance = attendances[0] if attendances else None
+
+		if attendance is not None:
+			attendanceDict = attendance.to_dict()
+			studentDict["timestamp"] = attendanceDict["timestamp"]
+		else:
+			studentDict["timestamp"] = 0
+
+		student = Attendee(**studentDict)
+		studentDict = student.model_dump()
+		result.append(studentDict)
+
+	if search:
+		pass
+			# docs = (
+			# 	db.collection("students")
+			# 	.where(filter=FieldFilter("first_name", ">=", search))
+			# 	.where(filter=FieldFilter("first_name", "<=", search + "\uf8ff"))
+			# 	.order_by("first_name", direction=firestore.Query.ASCENDING)
+			# 	.limit(5)
+			# )
+			# # Also search by last_name
+			# last_name_docs = (
+			# 	db.collection("students")
+			# 	.where(filter=FieldFilter("last_name", ">=", search))
+			# 	.where(filter=FieldFilter("last_name", "<=", search + "\uf8ff"))
+			# 	.order_by("last_name", direction=firestore.Query.ASCENDING)
+			# 	.limit(5)
+			# )
+			# # Merge results, avoiding duplicates
+			# doc_ids = set()
+			# result_docs = []
+			# for doc in docs.stream():
+			# 	doc_ids.add(doc.id)
+			# 	result_docs.append(doc)
+			# for doc in last_name_docs.stream():
+			# 	if doc.id not in doc_ids:
+			# 		result_docs.append(doc)
+			# docs = result_docs
+
+	return {
+		"message": "Student list and their attending time retrieved successfully",
+		"data": result
+	}
