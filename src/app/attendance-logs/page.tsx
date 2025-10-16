@@ -1,31 +1,38 @@
 "use client";
 
-import "bootstrap/dist/css/bootstrap.min.css";
-import { Button, Col, Container, Row, Alert } from "react-bootstrap";
 import { useEffect, useState } from "react";
+
 import axios from "axios";
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Col, Container, Row, Alert } from "react-bootstrap";
+
+import { BackButton } from "../components/buttons";
+
 import { useSelector } from "react-redux";
 import { RootState } from "../contexts/store";
-import { ThemeEnum } from "@/interfaces/enums";
-import Link from "next/link";
 
-interface Attendance {
-	attendee_id: string;
-	timestamp: number;
-	first_name?: string;
-	last_name?: string;
-}
+import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_times.ts";
+
+import { AttendeesType } from "@/interfaces/attendee_interface";
+import { ThemeEnum } from "@/interfaces/enums";
 
 export default function AttendanceLogs() {
 	const theme = useSelector((state: RootState) => state.theme.mode);
-	const [attendances, setAttendances] = useState<Attendance[]>([]);
+	const [data, setData] = useState<AttendeesType>([]);
 	const [error, setError] = useState<string>("");
 
 	useEffect(() => {
 		const fetchAttendances = async () => {
 			try {
-				const response = await axios.get("http://localhost:8000/attendances/");
-				setAttendances(response.data);
+				const response = await axios.get("http://localhost:8000/attendances/?recent=false");
+				const responseBody = response.data;
+				if (response.status !== 200) {
+					setError(responseBody.detail);
+					console.error(error);
+				}
+				setData(responseBody.data);
+				console.log(responseBody.message);
 			} catch (error) {
 				console.error("Error fetching attendances:", error);
 				setError("ไม่สามารถโหลดข้อมูลได้");
@@ -34,33 +41,28 @@ export default function AttendanceLogs() {
 		fetchAttendances();
 	}, []);
 
-	const startClassTime = new Date().setHours(8, 0, 0, 0);
-	const lateClassTime = new Date().setHours(10, 0, 0, 0);
-	const endClassTime = new Date().setHours(11, 0, 0, 0);
-
-	const attendanceRows = attendances.map((attendance, index) => {
-		const attendanceTime = attendance.timestamp * 1000; // Convert to milliseconds
+	const attendanceRows = data.map((attendance, index) => {
+		const timestamp = attendance.timestamp * 1000;
 		return (
 			<tr key={index}>
 				<td>
-					{new Date(attendanceTime).toLocaleString("th-TH", {
+					{new Date(timestamp).toLocaleString("th-TH", {
 						hour: "2-digit",
-						minute: "2-digit",
-						second: "2-digit",
+						minute: "2-digit"
 					})}
 				</td>
 				<td>
 					{attendance.first_name} {attendance.last_name}
 				</td>
-				{attendanceTime < lateClassTime &&
-				attendanceTime >= startClassTime ? (
+				{timestamp < lateClassTime &&
+				timestamp >= startClassTime ? (
 					<td className="text-success">ตรงเวลา</td>
 				) : null}
-				{attendanceTime < endClassTime &&
-				attendanceTime >= lateClassTime ? (
+				{timestamp < endClassTime &&
+				timestamp >= lateClassTime ? (
 					<td className="text-warning">เข้าสาย</td>
 				) : null}
-				{attendanceTime > endClassTime ? (
+				{timestamp > endClassTime ? (
 					<td className="text-danger">ขาด</td>
 				) : null}
 			</tr>
@@ -84,9 +86,7 @@ export default function AttendanceLogs() {
 			)}
 			<Row className="mb-3">
 				<Col>
-					<Link href="/">
-						<Button variant="secondary">← กลับ</Button>
-					</Link>
+					<BackButton />
 				</Col>
 				<Col>
 					<h2
@@ -118,7 +118,7 @@ export default function AttendanceLogs() {
 							<thead>
 								<tr>
 									<th>เวลา</th>
-									<th>ชื่อ - สกุล</th>
+									<th>ชื่อ - นามสกุล</th>
 									<th>สถานะ</th>
 								</tr>
 							</thead>
