@@ -92,7 +92,7 @@ export default function RegisterPage() {
       console.log('Sending request to server...');
 
       const response = await axios.post(
-        "http://localhost:8000/register",
+        "http://localhost:8000/students/",
         formDataToSend,
         {
           headers: {
@@ -103,12 +103,12 @@ export default function RegisterPage() {
         }
       );
 
-      // เพิ่ม console.log หลังได้รับ response
-      console.log('Server response:', response);
-
       if (response.status === 200) {
         alert('ลงทะเบียนสำเร็จ')
-        router.push('/login')
+        router.push('/')
+      } else {
+        console.log(response.data.detail);
+        setError(response.data.detail);
       }
     } catch (error) {
       // ปรับปรุงการจัดการ error
@@ -131,6 +131,7 @@ export default function RegisterPage() {
     } finally {
       setLoading(false)
     }
+  }
 
   return (
     <Container
@@ -259,36 +260,6 @@ export default function RegisterPage() {
                   type="file"
                   accept=".jpg,.jpeg,.png"
                   onChange={handleImageChange}
-                  className={`form-control-lg ${theme === ThemeEnum.DARK ? 'bg-dark text-white' : ''}`}
-                />
-                {imagePreview && (
-                  <div className="mt-2 text-center">
-                    <Image 
-                      src={imagePreview}
-                      alt="Preview"
-                      width={200}
-                      height={200}
-                      style={{ 
-                        borderRadius: '8px',
-                        objectFit: 'contain'
-                      }}
-                    />
-                  </div>
-                )}
-              </Form.Group>
-
-              <Form.Group className="mb-4">
-                <Form.Label className={theme === ThemeEnum.DARK ? 'text-white' : 'text-black'}>
-                  กรุณาอัพโหลดไฟล์รูปภาพ
-                </Form.Label>
-                <div className={`small mb-2 ${theme === ThemeEnum.DARK ? 'text-light' : 'text-muted'}`}>
-                  รองรับไฟล์ .jpg และ .png เท่านั้น
-                </div>
-                <Form.Control
-                  type="file"
-                  accept=".jpg,.jpeg,.png"
-                  onChange={handleImageChange}
-                  required // เพิ่ม required attribute
                   className={`form-control-lg ${theme === ThemeEnum.DARK ? 'bg-dark text-white' : ''}`}
                 />
                 {imagePreview && (
