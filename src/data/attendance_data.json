@@ -1,31 +1,31 @@
 {
   "labels": [
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00",
-    "14:00",
-    "15:00",
-    "16:00",
-    "17:00",
-    "18:00",
-    "19:00",
-    "20:00"
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat"
   ],
   "datasets": [
     {
-      "label": "Attended",
-      "data": [2, 3, 4, 10, 15, 11, 20, 8, 15, 3, 1, 0, 1, 0],
-      "backgroundColor": [
-        "blue",
-        "green",
-        "yellow",
-        "purple",
-        "orange"
-      ],
-      "color": "white"
+      "label": "In time",
+      "data": [5, 8, 6, 4, 2, 7, 9],
+      "backgroundColor": "green",
+      "color": "black"
+    },
+    {
+      "label": "Late",
+      "data": [2, 1, 3, 5, 7, 2, 0],
+      "backgroundColor": "yellow",
+      "color": "black"
+    },
+    {
+      "label": "Absent",
+      "data": [0, 1, 0, 1, 1, 0, 0],
+      "backgroundColor": "red",
+      "color": "black"
     }
   ]
 }

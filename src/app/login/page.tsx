@@ -34,20 +34,23 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/login', {
+      const response = await axios.post('http://localhost:8000/instructors/', {
         email: formData.email,
         password: formData.password
       })
 
       if (response.status === 200) {
-        // ถ้า login สำเร็จ
+        const responseBody = response.data
+
         dispatch(login({
-          id: response.data.id,
-          name: response.data.name,
-          email: formData.email,
-          isTeacher: response.data.isTeacher
+          first_name: responseBody.data.first_name,
+          last_name: responseBody.data.last_name,
+          token: responseBody.token
         }))
         router.push('/')
+      } else {
+        console.log(response.data.detail);
+        setError(response.data.detail);
       }
     } catch (error) {
       console.error(error)

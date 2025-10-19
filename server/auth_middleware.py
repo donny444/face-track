@@ -18,8 +18,8 @@ JWT_ALGORITHM = "HS256"
 EXEMPT_ROUTES: dict[str, set[str] | None] = {
     "/attendances/": None,
     "/students/": {"GET", "POST"},
-    "/login/": None,
-    "/register/": None,
+    "/instructors/": None,
+    "/insights/": None,
     "/docs": None,
     "/openapi.json": None,
     "/redoc": None,

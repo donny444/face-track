@@ -48,4 +48,4 @@ next-env.d.ts
 /server/firebase.json
 
 # people faces
-/server/Faces
+/server/faces

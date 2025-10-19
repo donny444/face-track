@@ -2,17 +2,16 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
   isAuthenticated: boolean;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    isTeacher: boolean;  // เพิ่ม field นี้
+  instructor: {
+    first_name: string;
+    last_name: string;
+    token: string;
   } | null;
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
-  user: null,
+  instructor: null,
 };
 
 const authSlice = createSlice({
@@ -20,17 +19,24 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     login: (state, action: PayloadAction<{ 
-      id: string; 
-      name: string; 
-      email: string;
-      isTeacher: boolean;  // เพิ่ม field นี้
+      first_name: string; 
+      last_name: string;
+      token: string
     }>) => {
       state.isAuthenticated = true;
-      state.user = action.payload;
+      state.instructor = action.payload;
+
+      sessionStorage.setItem('first_name', action.payload.first_name);
+      sessionStorage.setItem('last_name', action.payload.last_name);
+      sessionStorage.setItem('token', action.payload.token);
     },
     logout: (state) => {
       state.isAuthenticated = false;
-      state.user = null;
+      state.instructor = null;
+
+      sessionStorage.removeItem('first_name');
+      sessionStorage.removeItem('last_name');
+      sessionStorage.removeItem('token');
     },
   },
 });
