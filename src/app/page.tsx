@@ -22,6 +22,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  ChartData,
+  ChartOptions,
 } from "chart.js";
 ChartJS.register(
   CategoryScale,
@@ -29,14 +31,13 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 ChartJS.defaults.color = "#ffffff";
 
 import attendanceData from "@/data/attendance_data.json";
 import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_times.ts";
 
-import DailyChartProps from "@/interfaces/daily_chart_interface";
 import { AttendeeInterface, AttendeesType } from "@/interfaces/attendee_interface.ts";
 import { ThemeEnum } from "@/interfaces/enums.ts";
 
@@ -47,7 +48,7 @@ export default function Summary() {
     <Container fluid={"md"}>
       <Row>
         <AttendanceCountSummary themeMode={theme} />
-        <DailyChartSummary chartData={attendanceData} themeMode={theme} />
+        <WeeklyChartSummary themeMode={theme} />
       </Row>
       <Row>
         <AttendanceLogSummary themeMode={theme} />
@@ -146,26 +147,57 @@ function AttendanceCountSummary({ themeMode }: { themeMode: ThemeEnum }) {
   );
 }
 
-function DailyChartSummary({ chartData, themeMode }: DailyChartProps) {
+function WeeklyChartSummary({ themeMode }: { themeMode: ThemeEnum }) {
+  const [textColor, setTextColor] = useState("white");
+  const [chartData, setChartData] = useState<ChartData<"bar">>(attendanceData);
+  
+  const updateLabelColor = () => {
+    const updatedLabels = chartData.datasets.map((dataset) => ({
+      ...dataset,
+      color: textColor,
+    }));
+
+    setChartData({
+      ...chartData,
+      datasets: updatedLabels,
+    });
+  }
+
+  // useEffect(() => {
+  //   updateLabelColor();
+  // }, []);
+
   let themeBootstrap = "";
   switch (themeMode) {
     case ThemeEnum.DARK:
       themeBootstrap = "bg-dark text-white";
+      setTextColor("white");
+      updateLabelColor();
       break;
     case ThemeEnum.LIGHT:
       themeBootstrap = "bg-light text-black";
+      setTextColor("black");
+      updateLabelColor();
       break;
     default:
       break;
   }
 
-  const options = {
+  const options: ChartOptions<"bar"> = {
     responsive: true,
     plugins: {
       title: {
         display: true,
         text: "กราฟประจำวัน",
-        color: "white",
+        color: textColor,
+      },
+    },
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true,
       },
     },
   };
