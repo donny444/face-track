@@ -27,15 +27,16 @@ app.add_middleware(
 )
 
 load_dotenv(".env.local")
+CLIENT_ORIGIN = os.getenv("CLIENT_ORIGIN", "http://localhost:3000")
 TOKEN_TTL_MINUTES = int(os.getenv("JWT_TOKEN_TTL_MINUTES", "60"))
 VALID_EMAIL_DOMAIN = os.getenv("VALID_EMAIL_DOMAIN", "@kmitl.ac.th")
-if not (TOKEN_TTL_MINUTES and VALID_EMAIL_DOMAIN):
+if not (CLIENT_ORIGIN and TOKEN_TTL_MINUTES and VALID_EMAIL_DOMAIN):
     raise RuntimeWarning("environment variables not found")
 
 # เพิ่ม CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # หรือ domain ของ frontend
+    allow_origins=[CLIENT_ORIGIN],  # หรือ domain ของ frontend
     allow_credentials=True,
     allow_methods=["*"],  # อนุญาตทุก HTTP methods
     allow_headers=["*"],  # อนุญาตทุก headers
