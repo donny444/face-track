@@ -22,6 +22,8 @@ import {
 import { AttendeesType } from "@/interfaces/attendee_interface";
 import { ThemeEnum } from "@/interfaces/enums";
 
+import { SERVER_URL } from '@/data/environment_varibles';
+
 export default function StudentList() {
   const dispatch = useDispatch();
   const theme = useSelector(
@@ -51,7 +53,7 @@ export default function StudentList() {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/students/");
+      const response = await axios.get(`${SERVER_URL}/students/`);
       const responseBody = response.data;
       if (response.status !== 200) {
         setError(responseBody.detail);
@@ -87,7 +89,7 @@ export default function StudentList() {
       try {
         // เปลี่ยนวิธีการส่ง studentId
         const response = await axios.delete(
-          `http://localhost:8000/students/${selectedStudent}`,
+          `${SERVER_URL}/students/${selectedStudent}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

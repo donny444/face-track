@@ -13,6 +13,8 @@ import { RootState } from "../contexts/store";
 import { ThemeEnum } from "@/interfaces/enums";
 import axios from "axios";
 
+import { SERVER_URL } from '@/data/environment_varibles';
+
 export default function RegisterPage() {
   const router = useRouter();
   const theme = useSelector((state: RootState) => state.theme.mode);
@@ -92,7 +94,7 @@ export default function RegisterPage() {
       console.log('Sending request to server...');
 
       const response = await axios.post(
-        "http://localhost:8000/students/",
+        `${SERVER_URL}/students/`,
         formDataToSend,
         {
           headers: {

@@ -14,13 +14,16 @@ from urllib.parse import urlparse
 # --- CONFIGURATIONS ---
 # ==============================================================================
 # **สำคัญ:** ตรวจสอบให้แน่ใจว่า IP นี้คือ IP ของ Notebook (Server) ของคุณ
-API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://192.168.0.149:8000") 
-STUDENTS_ENDPOINT = f"{API_BASE_URL.rstrip('/')}/students/"
-ATTENDANCE_ENDPOINT = f"{API_BASE_URL.rstrip('/')}/attendances/"
+SERVER_API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://localhost:8000") 
+FACE_DIR = os.getenv("FACE_DIR", "faces")
+if not (SERVER_API_BASE_URL and FACE_DIR):
+    raise RuntimeWarning("environment variables not found")
+
+STUDENTS_ENDPOINT = f"{SERVER_API_BASE_URL}/students/"
+ATTENDANCE_ENDPOINT = f"{SERVER_API_BASE_URL}/attendances/"
 
 # Directory to store face images
-FACES_DIR = 'faces'
-os.makedirs(FACES_DIR, exist_ok=True)
+os.makedirs(FACE_DIR, exist_ok=True)
 
 # OpenCV Window Name
 WINDOW_NAME = "Attendance Check-in System"
@@ -63,9 +66,9 @@ def sync_faces_from_server() -> Dict[str, dict]:
             
             parsed_url = urlparse(image_url_from_server)
             image_path = parsed_url.path
-            correct_download_url = f"{API_BASE_URL.rstrip('/')}{image_path}"
+            correct_download_url = f"{SERVER_API_BASE_URL}{image_path}"
             local_filename = os.path.basename(image_path)
-            local_filepath = os.path.join(FACES_DIR, local_filename)
+            local_filepath = os.path.join(FACE_DIR, local_filename)
 
             student_cache[student_id] = {"first_name": student.get("first_name", "N/A")}
 
@@ -134,9 +137,9 @@ print("\n--- 2. Loading known faces into memory... ---")
 known_face_encodings, known_face_names = [], []
 for student_id in student_data_cache.keys():
     # Find any image file starting with the student_id
-    image_file = next((f for f in os.listdir(FACES_DIR) if f.startswith(student_id)), None)
+    image_file = next((f for f in os.listdir(FACE_DIR) if f.startswith(student_id)), None)
     if image_file:
-        img_path = os.path.join(FACES_DIR, image_file)
+        img_path = os.path.join(FACE_DIR, image_file)
         try:
             image = face_recognition.load_image_file(img_path)
             encodings = face_recognition.face_encodings(image)

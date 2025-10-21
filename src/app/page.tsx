@@ -41,6 +41,8 @@ import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_t
 import { AttendeeInterface, AttendeesType } from "@/interfaces/attendee_interface.ts";
 import { ThemeEnum } from "@/interfaces/enums.ts";
 
+import { SERVER_URL } from "@/data/environment_varibles.ts";
+
 export default function Summary() {
   const theme = useSelector((state: RootState) => state.theme.mode);
 
@@ -78,7 +80,7 @@ function AttendanceCountSummary({ themeMode }: { themeMode: ThemeEnum }) {
   }
 
   const attendanceResponse = async () => {
-    const response = await axios.get("http://localhost:8000/attendances/?recent=false");
+    const response = await axios.get(`${SERVER_URL}/attendances/?recent=false`);
     const responseBody = await response.data;
     if (response.status !== 200) {
       setError(responseBody.detail);
@@ -215,7 +217,7 @@ function AttendanceLogSummary({ themeMode }: { themeMode: ThemeEnum }) {
 
   const attendanceResponse = async () => {
     const response = await axios.get(
-      "http://localhost:8000/attendances/?recent=true"
+      `${SERVER_URL}/attendances/?recent=true`
     );
     const responseBody = await response.data;
     if (response.status !== 200) {
@@ -310,7 +312,7 @@ function StudentListSummary({ themeMode }: { themeMode: ThemeEnum }) {
 
   const studentsResponse = async () => {
     const response = await axios.get(
-      "http://localhost:8000/students/?head=true"
+      `${SERVER_URL}/students/?head=true`
     );
     const responseBody = await response.data;
     if (response.status !== 200) {
