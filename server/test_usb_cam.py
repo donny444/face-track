@@ -7,9 +7,17 @@ import requests
 from typing import Set
 from tkinter import Tk, Label, StringVar
 
-# ----------- Server API Config -----------
-API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://localhost:8000")
-ATTENDANCE_ENDPOINT = f"{API_BASE_URL.rstrip('/')}/attendances/"
+# ----------- Environment Variables -----------
+SERVER_API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://localhost:8000")
+FACE_DIR = os.getenv("FACE_DIR", "faces")
+if not (SERVER_API_BASE_URL and FACE_DIR):
+    raise RuntimeWarning("environment variables not found")
+
+# ----------- Server API Endpoints -----------
+ATTENDANCE_ENDPOINT = f"{SERVER_API_BASE_URL}/attendances/"
+
+# Directory to store face images
+os.makedirs(FACE_DIR, exist_ok=True)
 
 # ----------- Attendance Post Function -----------
 def post_attendance(attendee_id: str, sent_attendances: Set[str]) -> None:
@@ -37,11 +45,10 @@ def post_attendance(attendee_id: str, sent_attendances: Set[str]) -> None:
 # ----------- Load Known Faces -----------
 known_face_encodings = []
 known_face_names = []
-faces_dir = 'Faces'
 
-for filename in os.listdir(faces_dir):
+for filename in os.listdir(FACE_DIR):
     if filename.lower().endswith(('.jpg', '.png')):
-        img_path = os.path.join(faces_dir, filename)
+        img_path = os.path.join(FACE_DIR, filename)
         image = face_recognition.load_image_file(img_path)
         encoding = face_recognition.face_encodings(image)
         if encoding:
