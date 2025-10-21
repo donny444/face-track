@@ -17,6 +17,8 @@ import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_t
 import { AttendeesType } from "@/interfaces/attendee_interface";
 import { ThemeEnum } from "@/interfaces/enums";
 
+import { SERVER_URL } from '@/data/environment_varibles';
+
 export default function AttendanceLogs() {
 	const theme = useSelector((state: RootState) => state.theme.mode);
 	const [data, setData] = useState<AttendeesType>([]);
@@ -25,7 +27,7 @@ export default function AttendanceLogs() {
 	useEffect(() => {
 		const fetchAttendances = async () => {
 			try {
-				const response = await axios.get("http://localhost:8000/attendances/?recent=false");
+				const response = await axios.get(`${SERVER_URL}/attendances/?recent=false`);
 				const responseBody = response.data;
 				if (response.status !== 200) {
 					setError(responseBody.detail);

@@ -35,7 +35,7 @@ if not (TOKEN_TTL_MINUTES and VALID_EMAIL_DOMAIN):
 # เพิ่ม CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # หรือ domain ของ frontend
+    allow_origins=["*"],  # หรือ domain ของ frontend
     allow_credentials=True,
     allow_methods=["*"],  # อนุญาตทุก HTTP methods
     allow_headers=["*"],  # อนุญาตทุก headers

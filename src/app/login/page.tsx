@@ -13,6 +13,8 @@ import { RootState } from "../contexts/store";
 
 import { ThemeEnum } from "@/interfaces/enums";
 
+import { SERVER_URL } from '@/data/environment_varibles';
+
 export default function LoginPage() {
   const router = useRouter()
   const dispatch = useDispatch()
@@ -34,7 +36,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/instructors/', {
+      const response = await axios.post(`${SERVER_URL}/instructors/`, {
         email: formData.email,
         password: formData.password
       })
