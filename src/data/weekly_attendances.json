@@ -12,20 +12,17 @@
     {
       "label": "In time",
       "data": [5, 8, 6, 4, 2, 7, 9],
-      "backgroundColor": "green",
-      "color": "black"
+      "backgroundColor": "green"
     },
     {
       "label": "Late",
       "data": [2, 1, 3, 5, 7, 2, 0],
-      "backgroundColor": "yellow",
-      "color": "black"
+      "backgroundColor": "yellow"
     },
     {
       "label": "Absent",
       "data": [0, 1, 0, 1, 1, 0, 0],
-      "backgroundColor": "red",
-      "color": "black"
+      "backgroundColor": "red"
     }
   ]
 }

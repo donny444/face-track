@@ -35,10 +35,17 @@ ChartJS.register(
 );
 ChartJS.defaults.color = "#ffffff";
 
-import attendanceData from "@/data/attendance_data.json";
-import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_times.ts";
+import attendanceData from "@/data/weekly_attendances.json";
+import {
+  startClassTime,
+  lateClassTime,
+  endClassTime,
+} from "@/data/attendance_times.ts";
 
-import { AttendeeInterface, AttendeesType } from "@/interfaces/attendee_interface.ts";
+import {
+  AttendeeInterface,
+  AttendeesType,
+} from "@/interfaces/attendee_interface.ts";
 import { ThemeEnum } from "@/interfaces/enums.ts";
 
 import { SERVER_URL } from "@/data/environment_varibles.ts";
@@ -111,14 +118,12 @@ function AttendanceCountSummary({ themeMode }: { themeMode: ThemeEnum }) {
     setIntime(inTimeCount);
     setLate(lateCount);
     setAbsent(absentCount);
-
-    console.log(`inTime: ${inTime}, late: ${late}, absent: ${absent}`);
-  }
+  };
 
   useEffect(() => {
     attendanceResponse();
   }, []);
-  
+
   useEffect(() => {
     if (data.length > 0) {
       countStatuses();
@@ -151,35 +156,21 @@ function AttendanceCountSummary({ themeMode }: { themeMode: ThemeEnum }) {
 
 function WeeklyChartSummary({ themeMode }: { themeMode: ThemeEnum }) {
   const [textColor, setTextColor] = useState("white");
-  const [chartData, setChartData] = useState<ChartData<"bar">>(attendanceData);
-  
-  const updateLabelColor = () => {
-    const updatedLabels = chartData.datasets.map((dataset) => ({
-      ...dataset,
-      color: textColor,
-    }));
+  const chartData: ChartData<"bar"> = attendanceData;
 
-    setChartData({
-      ...chartData,
-      datasets: updatedLabels,
-    });
-  }
+  useEffect(() => {
+    const nextTextColor = themeMode === ThemeEnum.DARK ? "white" : "black";
 
-  // useEffect(() => {
-  //   updateLabelColor();
-  // }, []);
+    setTextColor(nextTextColor);
+  }, [themeMode]);
 
   let themeBootstrap = "";
   switch (themeMode) {
     case ThemeEnum.DARK:
       themeBootstrap = "bg-dark text-white";
-      setTextColor("white");
-      updateLabelColor();
       break;
     case ThemeEnum.LIGHT:
       themeBootstrap = "bg-light text-black";
-      setTextColor("black");
-      updateLabelColor();
       break;
     default:
       break;
@@ -193,13 +184,18 @@ function WeeklyChartSummary({ themeMode }: { themeMode: ThemeEnum }) {
         text: "กราฟประจำวัน",
         color: textColor,
       },
+      legend: {
+        labels: { color: textColor },
+      },
     },
     scales: {
       x: {
         stacked: true,
+        ticks: { color: textColor },
       },
       y: {
         stacked: true,
+        ticks: { color: textColor },
       },
     },
   };
@@ -216,9 +212,7 @@ function AttendanceLogSummary({ themeMode }: { themeMode: ThemeEnum }) {
   const [error, setError] = useState(null);
 
   const attendanceResponse = async () => {
-    const response = await axios.get(
-      `${SERVER_URL}/attendances/?recent=true`
-    );
+    const response = await axios.get(`${SERVER_URL}/attendances/?recent=true`);
     const responseBody = await response.data;
     if (response.status !== 200) {
       setError(responseBody.detail);
@@ -243,7 +237,7 @@ function AttendanceLogSummary({ themeMode }: { themeMode: ThemeEnum }) {
             <td>
               {new Date(timestamp).toLocaleString("th-TH", {
                 hour: "2-digit",
-                minute: "2-digit"
+                minute: "2-digit",
               })}
             </td>
             <td>
@@ -311,9 +305,7 @@ function StudentListSummary({ themeMode }: { themeMode: ThemeEnum }) {
   const [error, setError] = useState(null);
 
   const studentsResponse = async () => {
-    const response = await axios.get(
-      `${SERVER_URL}/students/?head=true`
-    );
+    const response = await axios.get(`${SERVER_URL}/students/?head=true`);
     const responseBody = await response.data;
     if (response.status !== 200) {
       setError(responseBody.detail);
@@ -349,7 +341,7 @@ function StudentListSummary({ themeMode }: { themeMode: ThemeEnum }) {
                 <td>
                   {new Date(timestamp).toLocaleString("th-TH", {
                     hour: "2-digit",
-                    minute: "2-digit"
+                    minute: "2-digit",
                   })}
                 </td>
                 {timestamp < lateClassTime && timestamp >= startClassTime ? (
