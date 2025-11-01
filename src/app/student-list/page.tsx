@@ -13,16 +13,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../contexts/store";
 import { login } from "../contexts/store/auth_slice.ts";
 
-import {
-  startClassTime,
-  lateClassTime,
-  endClassTime,
-} from "@/data/attendance_times.ts";
-
 import { AttendeesType } from "@/interfaces/attendee_interface";
-import { ThemeEnum } from "@/interfaces/enums";
+import { ThemeEnum, AttendanceStatusEnum } from "@/interfaces/enums";
 
-import { SERVER_URL } from '@/data/environment_varibles';
+import { GetAttendanceStatus } from "../helpers/attendance_helper.ts";
+
+import { SERVER_URL } from '@/data/global_variables.ts';
 
 export default function StudentList() {
   const dispatch = useDispatch();
@@ -122,6 +118,7 @@ export default function StudentList() {
     const rows: JSX.Element[] = [];
     for (const student of data) {
       const timestamp = student.timestamp * 1000;
+      const attendanceStatus = GetAttendanceStatus(timestamp);
       rows.push(
         <tr key={student.attendee_id}>
           <td>{student.attendee_id}</td>
@@ -141,13 +138,13 @@ export default function StudentList() {
                   minute: "2-digit"
                 })}
               </td>
-              {timestamp < lateClassTime && timestamp >= startClassTime ? (
+              {attendanceStatus === AttendanceStatusEnum.ON_TIME ? (
                 <td className="text-success">ตรงเวลา</td>
               ) : null}
-              {timestamp < endClassTime && timestamp >= lateClassTime ? (
+              {attendanceStatus === AttendanceStatusEnum.LATE ? (
                 <td className="text-warning">เข้าสาย</td>
               ) : null}
-              {timestamp > endClassTime ? (
+              {attendanceStatus === AttendanceStatusEnum.ABSENT ? (
                 <td className="text-danger">ขาด</td>
               ) : null}
             </>

@@ -12,12 +12,12 @@ import { BackButton } from "../components/buttons";
 import { useSelector } from "react-redux";
 import { RootState } from "../contexts/store";
 
-import { startClassTime, lateClassTime, endClassTime } from "@/data/attendance_times.ts";
-
 import { AttendeesType } from "@/interfaces/attendee_interface";
-import { ThemeEnum } from "@/interfaces/enums";
+import { ThemeEnum, AttendanceStatusEnum } from "@/interfaces/enums";
 
-import { SERVER_URL } from '@/data/environment_varibles';
+import { GetAttendanceStatus } from "@/app/helpers/attendance_helper.ts";
+
+import { SERVER_URL } from '@/data/global_variables.ts';
 
 export default function AttendanceLogs() {
 	const theme = useSelector((state: RootState) => state.theme.mode);
@@ -45,6 +45,7 @@ export default function AttendanceLogs() {
 
 	const attendanceRows = data.map((attendance, index) => {
 		const timestamp = attendance.timestamp * 1000;
+		const attendanceStatus = GetAttendanceStatus(timestamp);
 		return (
 			<tr key={index}>
 				<td>
@@ -56,15 +57,13 @@ export default function AttendanceLogs() {
 				<td>
 					{attendance.first_name} {attendance.last_name}
 				</td>
-				{timestamp < lateClassTime &&
-				timestamp >= startClassTime ? (
+				{attendanceStatus === AttendanceStatusEnum.ON_TIME ? (
 					<td className="text-success">ตรงเวลา</td>
 				) : null}
-				{timestamp < endClassTime &&
-				timestamp >= lateClassTime ? (
+				{attendanceStatus === AttendanceStatusEnum.LATE ? (
 					<td className="text-warning">เข้าสาย</td>
 				) : null}
-				{timestamp > endClassTime ? (
+				{attendanceStatus === AttendanceStatusEnum.ABSENT ? (
 					<td className="text-danger">ขาด</td>
 				) : null}
 			</tr>
