@@ -1,6 +1,7 @@
 import cv2
 import face_recognition
 import os
+from dotenv import load_dotenv
 import time
 import threading
 import requests
@@ -8,13 +9,16 @@ from typing import Set
 from tkinter import Tk, Label, StringVar
 
 # ----------- Environment Variables -----------
-SERVER_API_BASE_URL = os.getenv("SERVER_API_BASE_URL", "http://localhost:8000")
-FACE_DIR = os.getenv("FACE_DIR", "faces")
-if not (SERVER_API_BASE_URL and FACE_DIR):
+load_dotenv(".env.local")
+FACE_DIR = os.getenv("FACE_DIR")
+API_BASE_URL = os.getenv("SERVER_API_BASE_URL")
+if not (FACE_DIR and API_BASE_URL):
+    FACE_DIR = "faces"
+    API_BASE_URL = "http://127.0.0.1:8000"
     raise RuntimeWarning("environment variables not found")
 
 # ----------- Server API Endpoints -----------
-ATTENDANCE_ENDPOINT = f"{SERVER_API_BASE_URL}/attendances/"
+ATTENDANCE_ENDPOINT = f"{API_BASE_URL.rstrip('/')}/attendances/"
 
 # Directory to store face images
 os.makedirs(FACE_DIR, exist_ok=True)
