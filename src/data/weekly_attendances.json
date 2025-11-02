@@ -1,0 +1,28 @@
+{
+  "labels": [
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat"
+  ],
+  "datasets": [
+    {
+      "label": "On time",
+      "data": [],
+      "backgroundColor": "green"
+    },
+    {
+      "label": "Late",
+      "data": [],
+      "backgroundColor": "yellow"
+    },
+    {
+      "label": "Absent",
+      "data": [],
+      "backgroundColor": "red"
+    }
+  ]
+}

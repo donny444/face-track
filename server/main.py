@@ -70,7 +70,9 @@ async def Attend(attendance: Attendance):
 	if not attendeeId:
 		raise HTTPException(status_code=400, detail="attendeeId is required in the request body")
 
-	timestamp = int(datetime.now(tz=timezone.utc).timestamp())
+	timestamp = attendance.timestamp
+	if timestamp == 0:
+		timestamp = int(datetime.now(tz=timezone.utc).timestamp())
 
 	# Convert timestamp to UTC date (year, month, day)
 	attendanceDate = datetime.fromtimestamp(timestamp, tz=timezone.utc).date()
@@ -86,7 +88,7 @@ async def Attend(attendance: Attendance):
 		.stream()
 	)
 
-	if existedAttendance:
+	if existedAttendance is not None and len(list(existedAttendance)) > 0:
 		raise HTTPException(status_code=400, detail="The student is already attended for today")
 
 	# attendanceDict = {
@@ -381,14 +383,16 @@ async def GetAttendancesThisWeek():
 	try:
 		now = datetime.now(tz=timezone.utc)
 		startOfTheWeek = int((now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+		endOfTheWeek = int((now + timedelta(days=6 - now.weekday())).replace(hour=23, minute=59, second=59, microsecond=999999).timestamp())
 
 		attendancesThisWeek = (db.collection("attendances") \
 			.select(["timestamp"]) \
 			.where(filter=FieldFilter("timestamp", ">=", startOfTheWeek)) \
+			.where(filter=FieldFilter("timestamp", "<=", endOfTheWeek)) \
 			.order_by("timestamp", direction=firestore.Query.DESCENDING) \
 			.stream() \
 		)
-		attendances = list(attendance.to_dict() for attendance in attendancesThisWeek)
+		attendances = list(attendance.to_dict()["timestamp"] for attendance in attendancesThisWeek)
 
 		return {
 			"message": "Attendances from the start of the week retrieved successfully",

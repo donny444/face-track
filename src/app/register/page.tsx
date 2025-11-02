@@ -13,7 +13,7 @@ import { RootState } from "../contexts/store";
 import { ThemeEnum } from "@/interfaces/enums";
 import axios from "axios";
 
-import { SERVER_URL } from '@/data/environment_varibles';
+import { SERVER_URL } from '@/data/global_variables.ts';
 
 export default function RegisterPage() {
   const router = useRouter();

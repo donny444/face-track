@@ -49,3 +49,6 @@ next-env.d.ts
 
 # people faces
 /server/faces
+
+# global variables in next.js
+/src/data/global_variables.ts
