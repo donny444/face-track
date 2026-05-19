@@ -1,0 +1,15 @@
+type: object
+title: AttendanceCreatedResponse
+description: |
+  201 response envelope from `POST /attendances/`. The `data` field
+  contains the persisted attendance with the server-normalised timestamp.
+additionalProperties: false
+required:
+  - message
+  - data
+properties:
+  message:
+    type: string
+    example: "Attendance recorded successfully"
+  data:
+    $ref: "./Attendance.yaml"

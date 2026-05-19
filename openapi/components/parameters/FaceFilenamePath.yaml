@@ -1,0 +1,12 @@
+name: filename
+in: path
+required: true
+description: |
+  Stored face-image filename. By convention this is
+  `{studentId}.{jpg|jpeg|png}` — produced by `POST /students/` when an
+  `image` part is supplied.
+schema:
+  type: string
+  minLength: 1
+  pattern: "^[A-Za-z0-9._-]+$"
+example: "66070123.jpg"

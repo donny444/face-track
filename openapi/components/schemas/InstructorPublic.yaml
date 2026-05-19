@@ -1,0 +1,26 @@
+type: object
+title: InstructorPublic
+description: |
+  The publicly-safe projection of an instructor record returned by
+  `POST /instructors/`. The `password` field is intentionally omitted.
+additionalProperties: false
+properties:
+  email:
+    type:
+      - string
+      - "null"
+    format: email
+    description: Instructor's institutional email address.
+    example: "ajarn.somsak@kmitl.ac.th"
+  first_name:
+    type:
+      - string
+      - "null"
+    description: Instructor's given name.
+    example: "Somsak"
+  last_name:
+    type:
+      - string
+      - "null"
+    description: Instructor's family name.
+    example: "Wongsiri"

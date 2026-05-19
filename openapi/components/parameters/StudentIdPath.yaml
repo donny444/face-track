@@ -1,0 +1,11 @@
+name: studentId
+in: path
+required: true
+description: |
+  Firestore id of the student to remove. Conventionally the local-part
+  of the student's institutional email (e.g. `66070123` for
+  `66070123@kmitl.ac.th`).
+schema:
+  type: string
+  minLength: 1
+example: "66070123"

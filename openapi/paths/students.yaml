@@ -1,0 +1,81 @@
+get:
+  tags: [Students]
+  summary: List students
+  operationId: listStudents
+  description: |
+    Return every registered student together with their attendance
+    timestamp for the current UTC day (`0` when they have not yet
+    attended). When `head=true` (the default) only the first five
+    students are returned, which is what the dashboard uses for its
+    preview tile.
+  security: []
+  parameters:
+    - $ref: "../components/parameters/StudentsHead.yaml"
+    - $ref: "../components/parameters/StudentsSearch.yaml"
+  responses:
+    "200":
+      description: Students and their attending time today.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/StudentsListResponse.yaml"
+          example:
+            message: "Student list and their attending time retrieved successfully"
+            data:
+              - attendee_id: "66070123"
+                first_name: "Somchai"
+                last_name: "Jaidee"
+                timestamp: 1763538600
+              - attendee_id: "66070124"
+                first_name: "Anong"
+                last_name: "Srisai"
+                timestamp: 0
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"
+
+post:
+  tags: [Students]
+  summary: Register a student
+  operationId: registerStudent
+  description: |
+    Create a Firebase Authentication account and a Firestore record for
+    a new student. When an `image` part is supplied it is stored under
+    `faces/{studentId}.{ext}` and later served via
+    `GET /faces/{filename}` for the face-recognition pipeline to consume.
+    Email must end with the configured `VALID_EMAIL_DOMAIN`
+    (default `@kmitl.ac.th`).
+  security: []
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: "../components/schemas/StudentRegistration.yaml"
+        encoding:
+          image:
+            contentType: image/jpeg, image/png
+        examples:
+          registerWithoutImage:
+            summary: Register without a reference photo
+            value:
+              email: "66070123@kmitl.ac.th"
+              first_name: "Somchai"
+              last_name: "Jaidee"
+              password: "ChangeMe!42"
+  responses:
+    "201":
+      description: Student registered successfully.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/MessageResponse.yaml"
+          example:
+            message: "Student registered successfully"
+    "400":
+      $ref: "../components/responses/BadRequest.yaml"
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"

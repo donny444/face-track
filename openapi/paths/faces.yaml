@@ -1,0 +1,41 @@
+get:
+  tags: [Static]
+  summary: Fetch a stored face image
+  operationId: getFaceImage
+  description: |
+    Serve a previously-uploaded reference face image straight off disk
+    via FastAPI's `StaticFiles` mount. Filenames are produced by
+    `POST /students/` and follow the convention `{studentId}.{ext}`.
+
+    The Auth middleware still applies to this mount, so a valid
+    instructor JWT is required.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: "../components/parameters/FaceFilenamePath.yaml"
+  responses:
+    "200":
+      description: The raw image bytes.
+      content:
+        image/jpeg:
+          schema:
+            type: string
+            format: binary
+        image/png:
+          schema:
+            type: string
+            format: binary
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "401":
+      $ref: "../components/responses/Unauthorized.yaml"
+    "404":
+      description: No face image exists with the requested filename.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/ErrorResponse.yaml"
+          example:
+            detail: "Not Found"

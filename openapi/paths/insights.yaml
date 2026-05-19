@@ -1,0 +1,24 @@
+get:
+  tags: [Insights]
+  summary: Week-to-date attendance timestamps
+  operationId: getWeeklyAttendanceTimestamps
+  description: |
+    Return every attendance epoch-second timestamp that falls within the
+    current ISO week (Monday 00:00:00 UTC through Sunday 23:59:59 UTC),
+    ordered newest first. Feeds the dashboard's weekly bar/line chart.
+  security: []
+  responses:
+    "200":
+      description: Week-to-date attendance timestamps.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/InsightsResponse.yaml"
+          example:
+            message: "Attendances from the start of the week retrieved successfully"
+            data:
+              - 1763538600
+              - 1763452200
+              - 1763365800
+    "500":
+      $ref: "../components/responses/InternalError.yaml"

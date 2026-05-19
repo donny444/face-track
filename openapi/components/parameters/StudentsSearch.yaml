@@ -1,0 +1,12 @@
+name: search
+in: query
+required: false
+description: |
+  Free-text search across student `first_name` / `last_name`. Currently
+  accepted by the server but the matching path is not yet implemented;
+  supplying a value is harmless and behaves as if the query were absent.
+schema:
+  type:
+    - string
+    - "null"
+example: "Somchai"

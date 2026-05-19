@@ -1,0 +1,13 @@
+type: object
+title: HTTPValidationError
+description: |
+  FastAPI's default 422 envelope. Emitted automatically when one or more
+  request fields fail Pydantic validation before the handler runs.
+additionalProperties: false
+required:
+  - detail
+properties:
+  detail:
+    type: array
+    items:
+      $ref: "./ValidationError.yaml"

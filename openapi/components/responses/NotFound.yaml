@@ -1,0 +1,17 @@
+description: |
+  The referenced resource (user, instructor, student, face image) could
+  not be located in Firebase Authentication, Firestore or the static
+  uploads directory.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/ErrorResponse.yaml"
+    examples:
+      userNotFound:
+        summary: Firebase user not found
+        value:
+          detail: "User not found"
+      instructorNotFound:
+        summary: Instructor record missing
+        value:
+          detail: "Instructor not found"

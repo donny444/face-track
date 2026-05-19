@@ -1,0 +1,27 @@
+type: object
+title: Attendance
+description: |
+  A persisted attendance record as stored in the Firestore `attendances`
+  collection. Returned in the `data` envelope of `POST /attendances/`
+  after server-side timestamp normalisation.
+additionalProperties: false
+required:
+  - attendee_id
+  - timestamp
+properties:
+  attendee_id:
+    type: string
+    description: Firestore id of the student that this attendance belongs to.
+    minLength: 1
+    example: "66070123"
+  timestamp:
+    description: |
+      Unix epoch seconds (UTC) at which the attendance was recorded.
+      Always populated after the server normalises a missing/zero value
+      to the current time.
+    type:
+      - integer
+      - "null"
+    format: int64
+    minimum: 0
+    example: 1763538600

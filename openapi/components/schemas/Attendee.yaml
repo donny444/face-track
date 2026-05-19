@@ -1,0 +1,47 @@
+type: object
+title: Attendee
+description: |
+  A flattened, UI-friendly view of an attendance that also carries the
+  student's display name. Used in `GET /attendances/` and `GET /students/`
+  responses. When the student has no attendance recorded for the current
+  day, `timestamp` is `0`. When the student record cannot be resolved,
+  `first_name` and `last_name` default to `"Unknown"`.
+additionalProperties: false
+required:
+  - attendee_id
+  - timestamp
+properties:
+  attendee_id:
+    type: string
+    description: Firestore id of the student.
+    minLength: 1
+    example: "66070123"
+  timestamp:
+    description: |
+      Unix epoch seconds (UTC) of the student's attendance for the current
+      day. Set to `0` when the student has not attended yet today.
+    type:
+      - integer
+      - "null"
+    format: int64
+    minimum: 0
+    default: 0
+    example: 1763538600
+  first_name:
+    description: |
+      Student's given name. Defaults to `"Unknown"` when the student
+      record cannot be located.
+    type:
+      - string
+      - "null"
+    default: "Unknown"
+    example: "Somchai"
+  last_name:
+    description: |
+      Student's family name. Defaults to `"Unknown"` when the student
+      record cannot be located.
+    type:
+      - string
+      - "null"
+    default: "Unknown"
+    example: "Jaidee"

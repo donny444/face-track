@@ -1,0 +1,30 @@
+type: object
+title: AttendanceCreate
+description: |
+  Request body sent by the Raspberry Pi face-recognition client when it
+  observes a student. The server normalises a `timestamp` of `0` (or `null`)
+  to the current UTC epoch second on receipt.
+additionalProperties: false
+required:
+  - attendee_id
+properties:
+  attendee_id:
+    type: string
+    description: |
+      Firestore document id of the student in the `students` collection.
+      Conventionally the local-part of the student's institutional email
+      (e.g. `66070000` for `66070000@kmitl.ac.th`).
+    minLength: 1
+    example: "66070123"
+  timestamp:
+    description: |
+      Unix epoch seconds (UTC) at which the attendance was observed.
+      When omitted, `null`, or `0`, the server substitutes the current
+      server-side UTC timestamp.
+    type:
+      - integer
+      - "null"
+    format: int64
+    minimum: 0
+    default: 0
+    example: 1763538600

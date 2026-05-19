@@ -1,0 +1,46 @@
+type: object
+title: StudentRegistration
+description: |
+  Multipart form-data payload accepted by `POST /students/`. The optional
+  `image` part is the student's reference face photo that the
+  Raspberry-Pi face-recognition pipeline will compare against.
+required:
+  - email
+  - first_name
+  - last_name
+  - password
+properties:
+  email:
+    type: string
+    format: email
+    description: |
+      Student's institutional email. Must end with the configured
+      `VALID_EMAIL_DOMAIN` (default `@kmitl.ac.th`). The local-part
+      becomes the Firestore document id for the student.
+    example: "66070123@kmitl.ac.th"
+  first_name:
+    type: string
+    minLength: 1
+    description: Student's given name.
+    example: "Somchai"
+  last_name:
+    type: string
+    minLength: 1
+    description: Student's family name.
+    example: "Jaidee"
+  password:
+    type: string
+    format: password
+    writeOnly: true
+    minLength: 6
+    description: |
+      Plain-text password used to create the student's Firebase
+      Authentication account. Firebase enforces a minimum length of 6.
+    example: "ChangeMe!42"
+  image:
+    type: string
+    format: binary
+    description: |
+      Reference face photo. Accepted MIME types are `image/jpeg`,
+      `image/jpg`, and `image/png`. Stored under `faces/{studentId}.{ext}`
+      and served back via `GET /faces/{filename}`.

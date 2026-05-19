@@ -1,0 +1,29 @@
+type: object
+title: ValidationError
+description: |
+  Single field-level validation problem reported by FastAPI / Pydantic.
+  Multiple of these are returned as a list inside `HTTPValidationError`.
+additionalProperties: false
+required:
+  - loc
+  - msg
+  - type
+properties:
+  loc:
+    type: array
+    description: |
+      Location of the problematic field, expressed as a sequence of
+      keys/indexes (e.g. `["body", "attendee_id"]`).
+    items:
+      anyOf:
+        - type: string
+        - type: integer
+    example: ["body", "attendee_id"]
+  msg:
+    type: string
+    description: Human-readable description of the validation problem.
+    example: "Field required"
+  type:
+    type: string
+    description: Machine-readable Pydantic error type code.
+    example: "missing"

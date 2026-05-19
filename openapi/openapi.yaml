@@ -1,0 +1,204 @@
+openapi: 3.1.0
+
+info:
+  title: FaceTrack API
+  version: 1.0.0
+  summary: |
+    REST API powering the FaceTrack attendance system.
+  description: |
+    FaceTrack is a face-recognition-based attendance system. A
+    Raspberry Pi running OpenCV identifies students in real time and
+    posts attendances to this FastAPI backend, which persists them in
+    Cloud Firestore and exposes a Next.js dashboard for instructors.
+
+    This document describes the HTTP surface of the FastAPI server in
+    `server/main.py`. It is hand-authored and curated — preferred over
+    the auto-generated `/openapi.json` for documentation purposes
+    because it captures realistic error responses, examples and
+    descriptive prose that the runtime spec omits.
+
+    ## Authentication
+
+    Every endpoint **except** the ones explicitly listed in
+    `auth_middleware.EXEMPT_ROUTES` requires a bearer JWT obtained from
+    `POST /instructors/`. The exempt routes are documented inline with
+    `security: []` overrides.
+
+    ## Stack
+
+    - **Server:** Python 3.11+, FastAPI, Firebase Admin SDK,
+      `python-jose`/`PyJWT`.
+    - **Client:** Next.js, Chart.js, Redux, Bootstrap.
+    - **Recognition device:** Raspberry Pi, OpenCV.
+  contact:
+    name: FaceTrack maintainers
+    url: https://github.com/donny444/face-track
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: http://localhost:8000
+    description: |
+      Local FastAPI server started with
+      `uvicorn main:app --reload --host 0.0.0.0 --port 8000` from inside
+      the `server/` directory.
+  - url: http://localhost/api
+    description: |
+      Production-style deployment behind an nginx reverse proxy that
+      strips the `/api` prefix before forwarding to FastAPI.
+
+tags:
+  - name: Attendances
+    description: |
+      Endpoints used by the face-recognition device to push attendance
+      events and by the dashboard to display them.
+  - name: Students
+    description: |
+      Student registration, retrieval and removal.
+  - name: Instructors
+    description: |
+      Authentication for instructors. Login here to obtain the bearer
+      JWT required by the authenticated endpoints.
+  - name: Insights
+    description: |
+      Aggregations used by the dashboard's charts.
+  - name: Static
+    description: |
+      Static files served straight off disk by FastAPI's `StaticFiles`
+      mount. Documented here for completeness — not a JSON API.
+  - name: Meta
+    description: |
+      FastAPI-generated meta endpoints (`/docs`, `/openapi.json`,
+      `/redoc`). All are exempt from authentication.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /attendances/:
+    $ref: "./paths/attendances.yaml"
+  /students/:
+    $ref: "./paths/students.yaml"
+  /students/{studentId}:
+    $ref: "./paths/students_by_id.yaml"
+  /instructors/:
+    $ref: "./paths/instructors.yaml"
+  /insights/:
+    $ref: "./paths/insights.yaml"
+  /faces/{filename}:
+    $ref: "./paths/faces.yaml"
+  /docs:
+    get:
+      tags: [Meta]
+      summary: Swagger UI
+      operationId: getSwaggerUi
+      description: |
+        FastAPI's auto-generated Swagger UI for the runtime
+        `/openapi.json`. Exempt from authentication.
+      security: []
+      responses:
+        "200":
+          description: Swagger UI HTML page.
+          content:
+            text/html:
+              schema:
+                type: string
+                format: html
+  /redoc:
+    get:
+      tags: [Meta]
+      summary: ReDoc
+      operationId: getReDoc
+      description: |
+        FastAPI's auto-generated ReDoc renderer for the runtime
+        `/openapi.json`. Exempt from authentication.
+      security: []
+      responses:
+        "200":
+          description: ReDoc HTML page.
+          content:
+            text/html:
+              schema:
+                type: string
+                format: html
+  /openapi.json:
+    get:
+      tags: [Meta]
+      summary: Runtime OpenAPI document
+      operationId: getRuntimeOpenApi
+      description: |
+        FastAPI's auto-generated OpenAPI 3.x document derived from the
+        Python type hints. Useful for comparing against this
+        hand-authored spec; see `openapi/README.md` for a suggested
+        diff workflow.
+      security: []
+      responses:
+        "200":
+          description: OpenAPI document.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: "./components/securitySchemes/bearerAuth.yaml"
+
+  parameters:
+    RecentAttendances:
+      $ref: "./components/parameters/RecentAttendances.yaml"
+    StudentsHead:
+      $ref: "./components/parameters/StudentsHead.yaml"
+    StudentsSearch:
+      $ref: "./components/parameters/StudentsSearch.yaml"
+    StudentIdPath:
+      $ref: "./components/parameters/StudentIdPath.yaml"
+    FaceFilenamePath:
+      $ref: "./components/parameters/FaceFilenamePath.yaml"
+
+  responses:
+    BadRequest:
+      $ref: "./components/responses/BadRequest.yaml"
+    Unauthorized:
+      $ref: "./components/responses/Unauthorized.yaml"
+    NotFound:
+      $ref: "./components/responses/NotFound.yaml"
+    InternalError:
+      $ref: "./components/responses/InternalError.yaml"
+    Validation:
+      $ref: "./components/responses/Validation.yaml"
+
+  schemas:
+    AttendanceCreate:
+      $ref: "./components/schemas/AttendanceCreate.yaml"
+    Attendance:
+      $ref: "./components/schemas/Attendance.yaml"
+    Attendee:
+      $ref: "./components/schemas/Attendee.yaml"
+    Instructor:
+      $ref: "./components/schemas/Instructor.yaml"
+    InstructorPublic:
+      $ref: "./components/schemas/InstructorPublic.yaml"
+    StudentRegistration:
+      $ref: "./components/schemas/StudentRegistration.yaml"
+    MessageResponse:
+      $ref: "./components/schemas/MessageResponse.yaml"
+    AttendanceCreatedResponse:
+      $ref: "./components/schemas/AttendanceCreatedResponse.yaml"
+    AttendancesListResponse:
+      $ref: "./components/schemas/AttendancesListResponse.yaml"
+    StudentsListResponse:
+      $ref: "./components/schemas/StudentsListResponse.yaml"
+    LoginResponse:
+      $ref: "./components/schemas/LoginResponse.yaml"
+    InsightsResponse:
+      $ref: "./components/schemas/InsightsResponse.yaml"
+    ErrorResponse:
+      $ref: "./components/schemas/ErrorResponse.yaml"
+    ValidationError:
+      $ref: "./components/schemas/ValidationError.yaml"
+    HTTPValidationError:
+      $ref: "./components/schemas/HTTPValidationError.yaml"

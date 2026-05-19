@@ -1,0 +1,21 @@
+type: object
+title: StudentsListResponse
+description: |
+  200 response envelope from `GET /students/`. Each element is an
+  `Attendee` projection: a student annotated with the timestamp of their
+  attendance for the current UTC day (`0` if they have not attended yet).
+additionalProperties: false
+required:
+  - message
+  - data
+properties:
+  message:
+    type: string
+    example: "Student list and their attending time retrieved successfully"
+  data:
+    type: array
+    description: |
+      Registered students plus their attendance status for today. Capped
+      at 5 entries when `head=true` (the default).
+    items:
+      $ref: "./Attendee.yaml"

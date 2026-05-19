@@ -1,0 +1,11 @@
+name: head
+in: query
+required: false
+description: |
+  When `true` (the default), only the first five student records are
+  returned — suitable for dashboard previews. Set to `false` to retrieve
+  every student in the collection.
+schema:
+  type: boolean
+  default: true
+example: true

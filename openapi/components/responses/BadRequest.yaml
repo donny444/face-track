@@ -1,0 +1,29 @@
+description: |
+  The request was malformed or violated a business rule (e.g. missing
+  required field, invalid email domain, duplicate attendance for the day,
+  or Firebase rejected the underlying call).
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/ErrorResponse.yaml"
+    examples:
+      missingField:
+        summary: A required field is missing
+        value:
+          detail: "attendeeId is required in the request body"
+      duplicateAttendance:
+        summary: Student already attended today
+        value:
+          detail: "The student is already attended for today"
+      invalidDomain:
+        summary: Email outside allowed domain
+        value:
+          detail: "Email must be from the @kmitl.ac.th domain"
+      duplicateStudent:
+        summary: Student already registered
+        value:
+          detail: "Student already exists"
+      unsupportedImage:
+        summary: Image MIME type not allowed
+        value:
+          detail: "Only .jpg and .png files are supported"

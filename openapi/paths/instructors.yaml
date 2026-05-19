@@ -1,0 +1,55 @@
+post:
+  tags: [Instructors]
+  summary: Instructor login
+  operationId: loginInstructor
+  description: |
+    Authenticate an instructor against Firebase Authentication and the
+    Firestore `instructors` collection, then mint an HS256-signed JWT
+    that can be used as a bearer token on every authenticated endpoint.
+    Token lifetime is controlled by the server-side environment variable
+    `JWT_TOKEN_TTL_MINUTES` (default `60`).
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/Instructor.yaml"
+        examples:
+          loginRequest:
+            summary: Standard login payload
+            value:
+              email: "ajarn.somsak@kmitl.ac.th"
+              password: "ChangeMe!42"
+  responses:
+    "200":
+      description: Login successful — bearer token issued.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/LoginResponse.yaml"
+          examples:
+            loginSuccess:
+              summary: Successful login envelope
+              value:
+                message: "successfully login as an instructor"
+                data:
+                  email: null
+                  first_name: "Somsak"
+                  last_name: "Wongsiri"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhamFybi5zb21zYWsiLCJlbWFpbCI6ImFqYXJuLnNvbXNha0BrbWl0bC5hYy50aCIsImlhdCI6MTc2MzUzODYwMCwiZXhwIjoxNzYzNTQyMjAwfQ.S1Gn4tUr3-PlAceh01derZ"
+    "400":
+      $ref: "../components/responses/BadRequest.yaml"
+    "404":
+      $ref: "../components/responses/NotFound.yaml"
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"
+  x-codeSamples:
+    - lang: shell
+      label: curl
+      source: |
+        curl -X POST http://localhost:8000/instructors/ \
+          -H 'Content-Type: application/json' \
+          -d '{"email":"ajarn.somsak@kmitl.ac.th","password":"ChangeMe!42"}'

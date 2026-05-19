@@ -1,0 +1,24 @@
+type: object
+title: LoginResponse
+description: |
+  200 response envelope from `POST /instructors/`. The `data` field is
+  the public projection of the instructor (password omitted) and `token`
+  is a signed JWT (HS256) whose lifetime is governed by the server-side
+  `JWT_TOKEN_TTL_MINUTES` environment variable.
+additionalProperties: false
+required:
+  - message
+  - data
+  - token
+properties:
+  message:
+    type: string
+    example: "successfully login as an instructor"
+  data:
+    $ref: "./InstructorPublic.yaml"
+  token:
+    type: string
+    description: |
+      Bearer JWT to be supplied in the `Authorization: Bearer <token>`
+      header on subsequent authenticated requests. Encoded with HS256.
+    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhamFybi5zb21zYWsiLCJlbWFpbCI6ImFqYXJuLnNvbXNha0BrbWl0bC5hYy50aCIsImlhdCI6MTc2MzUzODYwMCwiZXhwIjoxNzYzNTQyMjAwfQ.S1Gn4tUr3-PlAceh01derZ"

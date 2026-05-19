@@ -1,0 +1,20 @@
+type: object
+title: AttendancesListResponse
+description: |
+  200 response envelope from `GET /attendances/`. The `data` array is
+  sorted in descending order by `timestamp` and is limited to the
+  current UTC day. When `recent=true` the array is capped at 5 entries.
+additionalProperties: false
+required:
+  - message
+  - data
+properties:
+  message:
+    type: string
+    example: "Today's attendances retrieved successfully"
+  data:
+    type: array
+    description: |
+      Attendees that checked in during the current UTC day, newest first.
+    items:
+      $ref: "./Attendee.yaml"

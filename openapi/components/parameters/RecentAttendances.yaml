@@ -1,0 +1,11 @@
+name: recent
+in: query
+required: false
+description: |
+  When `true`, the server caps the returned list to the five most-recent
+  attendances for the current UTC day. Useful for dashboard "Recent
+  attendance" widgets.
+schema:
+  type: boolean
+  default: false
+example: false

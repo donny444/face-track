@@ -1,0 +1,12 @@
+description: |
+  One or more request fields failed Pydantic validation before reaching
+  the handler. Returned by FastAPI automatically.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/HTTPValidationError.yaml"
+    example:
+      detail:
+        - loc: ["body", "attendee_id"]
+          msg: "Field required"
+          type: "missing"

@@ -1,0 +1,32 @@
+delete:
+  tags: [Students]
+  summary: Delete a student
+  operationId: deleteStudent
+  description: |
+    Remove a student from Firebase Authentication and from the Firestore
+    `students` collection. Every attendance owned by the student is also
+    deleted in the same Firestore transaction. **Requires a valid
+    instructor JWT.**
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: "../components/parameters/StudentIdPath.yaml"
+  responses:
+    "200":
+      description: Student and dependent attendances deleted.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/MessageResponse.yaml"
+          example:
+            message: "Student and their attendances deleted successfully"
+    "400":
+      $ref: "../components/responses/BadRequest.yaml"
+    "401":
+      $ref: "../components/responses/Unauthorized.yaml"
+    "404":
+      $ref: "../components/responses/NotFound.yaml"
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"

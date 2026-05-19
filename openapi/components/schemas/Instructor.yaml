@@ -1,0 +1,43 @@
+type: object
+title: Instructor
+description: |
+  An instructor account. Returned in the `data` field of the
+  `POST /instructors/` (login) response with the `password` field
+  omitted by the server. The same shape is accepted as the login
+  request body but only `email` and `password` are actually consulted
+  by the server.
+additionalProperties: false
+properties:
+  email:
+    description: |
+      Institutional email address. Must match the configured
+      `VALID_EMAIL_DOMAIN` (e.g. `@kmitl.ac.th`) when used for
+      registration; for login any registered instructor email is accepted.
+    type:
+      - string
+      - "null"
+    format: email
+    example: "ajarn.somsak@kmitl.ac.th"
+  first_name:
+    description: Instructor's given name.
+    type:
+      - string
+      - "null"
+    example: "Somsak"
+  last_name:
+    description: Instructor's family name.
+    type:
+      - string
+      - "null"
+    example: "Wongsiri"
+  password:
+    description: |
+      Plain-text password. **Write-only**: this field is never echoed
+      back in any response and is only consulted by the login endpoint
+      to authenticate against Firebase Authentication.
+    type:
+      - string
+      - "null"
+    format: password
+    writeOnly: true
+    example: "s3cr3t-passw0rd!"

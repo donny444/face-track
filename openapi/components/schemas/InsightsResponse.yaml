@@ -1,0 +1,25 @@
+type: object
+title: InsightsResponse
+description: |
+  200 response envelope from `GET /insights/`. The `data` array is the
+  raw list of attendance epoch-second timestamps that fall within the
+  current ISO week (Monday 00:00:00 UTC through Sunday 23:59:59 UTC),
+  ordered newest first.
+additionalProperties: false
+required:
+  - message
+  - data
+properties:
+  message:
+    type: string
+    example: "Attendances from the start of the week retrieved successfully"
+  data:
+    type: array
+    description: |
+      Week-to-date attendance timestamps in Unix epoch seconds (UTC),
+      newest first.
+    items:
+      type: integer
+      format: int64
+      minimum: 0
+      example: 1763538600

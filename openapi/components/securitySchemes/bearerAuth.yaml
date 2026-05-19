@@ -1,0 +1,16 @@
+type: http
+scheme: bearer
+bearerFormat: JWT
+description: |
+  HS256-signed JSON Web Token issued by `POST /instructors/` (login).
+
+  Send on every authenticated request as:
+
+  ```
+  Authorization: Bearer <token>
+  ```
+
+  Token lifetime is controlled by the server-side environment variable
+  `JWT_TOKEN_TTL_MINUTES` (defaults to `60`). The token payload includes
+  `sub` (instructor document id), `email`, `iat` and `exp`. Expired or
+  malformed tokens result in `401 Unauthorized`.

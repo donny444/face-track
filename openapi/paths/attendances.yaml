@@ -1,0 +1,90 @@
+post:
+  tags: [Attendances]
+  summary: Record an attendance
+  operationId: recordAttendance
+  description: |
+    Persist a single attendance produced by the on-device face-recognition
+    pipeline. Called by the Raspberry-Pi client as soon as a recognised
+    face is observed. The server normalises a missing/zero `timestamp` to
+    its own UTC clock and refuses duplicates within the same UTC day.
+  security: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../components/schemas/AttendanceCreate.yaml"
+        examples:
+          attendanceRequest:
+            summary: Server-stamped timestamp
+            description: |
+              Omit `timestamp` (or send `0`) to let the server stamp the
+              record with its own clock.
+            value:
+              attendee_id: "66070123"
+              timestamp: 0
+          attendanceRequestExplicit:
+            summary: Client-supplied timestamp
+            value:
+              attendee_id: "66070123"
+              timestamp: 1763538600
+  responses:
+    "201":
+      description: Attendance recorded.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/AttendanceCreatedResponse.yaml"
+          example:
+            message: "Attendance recorded successfully"
+            data:
+              attendee_id: "66070123"
+              timestamp: 1763538600
+    "400":
+      $ref: "../components/responses/BadRequest.yaml"
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"
+  x-codeSamples:
+    - lang: shell
+      label: curl
+      source: |
+        curl -X POST http://localhost:8000/attendances/ \
+          -H 'Content-Type: application/json' \
+          -d '{"attendee_id":"66070123","timestamp":0}'
+
+get:
+  tags: [Attendances]
+  summary: List today's attendances
+  operationId: listTodaysAttendances
+  description: |
+    Return every attendance recorded between `00:00:00` and `23:59:59`
+    UTC of the current day, ordered newest first. Pass `recent=true` to
+    cap the result at the five most-recent entries — handy for the
+    dashboard "Recent attendance" widget.
+  security: []
+  parameters:
+    - $ref: "../components/parameters/RecentAttendances.yaml"
+  responses:
+    "200":
+      description: List of today's attendees.
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/AttendancesListResponse.yaml"
+          example:
+            message: "Today's attendances retrieved successfully"
+            data:
+              - attendee_id: "66070123"
+                timestamp: 1763538600
+                first_name: "Somchai"
+                last_name: "Jaidee"
+              - attendee_id: "66070124"
+                timestamp: 1763538542
+                first_name: "Anong"
+                last_name: "Srisai"
+    "422":
+      $ref: "../components/responses/Validation.yaml"
+    "500":
+      $ref: "../components/responses/InternalError.yaml"

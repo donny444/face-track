@@ -1,0 +1,13 @@
+type: object
+title: ErrorResponse
+description: |
+  Standard FastAPI error envelope. Every non-2xx response that originates
+  from `HTTPException` follows this shape.
+additionalProperties: false
+required:
+  - detail
+properties:
+  detail:
+    type: string
+    description: Human-readable explanation of why the request failed.
+    example: "Missing or invalid authorization header"

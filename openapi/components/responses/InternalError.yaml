@@ -1,0 +1,21 @@
+description: |
+  The server encountered an unrecoverable error — typically a Firestore
+  outage, a disk failure while persisting an uploaded face image, or a
+  misconfiguration such as a missing `JWT_SECRET_KEY`.
+content:
+  application/json:
+    schema:
+      $ref: "../schemas/ErrorResponse.yaml"
+    examples:
+      diskError:
+        summary: Failed to persist uploaded image
+        value:
+          detail: "Error saving image: [Errno 28] No space left on device"
+      misconfigured:
+        summary: JWT secret not configured
+        value:
+          detail: "JWT secret key is not configured"
+      firestoreError:
+        summary: Firestore query failed
+        value:
+          detail: "503 The service is currently unavailable."
