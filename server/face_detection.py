@@ -129,105 +129,110 @@ def draw_feedback(frame, message, color):
 # --- MAIN EXECUTION ---
 # ==============================================================================
 
-# 1. Sync data and get student info
-student_data_cache = sync_faces_from_server()
+def main() -> None:
+    # 1. Sync data and get student info
+    student_data_cache = sync_faces_from_server()
 
-# 2. Load known faces from local files
-print("\n--- 2. Loading known faces into memory... ---")
-known_face_encodings, known_face_names = [], []
-for student_id in student_data_cache.keys():
-    # Find any image file starting with the student_id
-    image_file = next((f for f in os.listdir(FACE_DIR) if f.startswith(student_id)), None)
-    if image_file:
-        img_path = os.path.join(FACE_DIR, image_file)
-        try:
-            image = face_recognition.load_image_file(img_path)
-            encodings = face_recognition.face_encodings(image)
-            if encodings:
-                known_face_encodings.append(encodings[0])
-                known_face_names.append(student_id)
-                print(f"  - Loaded face for: {student_id}")
-            else:
-                print(f"  - WARNING: No face found in {img_path}")
-        except Exception as e:
-            print(f"  - ERROR: Could not process {img_path}: {e}")
-print(f"--- Finished loading {len(known_face_names)} faces. ---\n")
+    # 2. Load known faces from local files
+    print("\n--- 2. Loading known faces into memory... ---")
+    known_face_encodings, known_face_names = [], []
+    for student_id in student_data_cache.keys():
+        # Find any image file starting with the student_id
+        image_file = next((f for f in os.listdir(FACE_DIR) if f.startswith(student_id)), None)
+        if image_file:
+            img_path = os.path.join(FACE_DIR, image_file)
+            try:
+                image = face_recognition.load_image_file(img_path)
+                encodings = face_recognition.face_encodings(image)
+                if encodings:
+                    known_face_encodings.append(encodings[0])
+                    known_face_names.append(student_id)
+                    print(f"  - Loaded face for: {student_id}")
+                else:
+                    print(f"  - WARNING: No face found in {img_path}")
+            except Exception as e:
+                print(f"  - ERROR: Could not process {img_path}: {e}")
+    print(f"--- Finished loading {len(known_face_names)} faces. ---\n")
 
-# 3. Initialize camera, attendance set, and UI variables
-sent_attendances: Set[str] = set()
-cap = cv2.VideoCapture(0)
-if not cap.isOpened():
-    print("!!! FATAL ERROR: Cannot open camera")
-    exit()
+    # 3. Initialize camera, attendance set, and UI variables
+    sent_attendances: Set[str] = set()
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("!!! FATAL ERROR: Cannot open camera")
+        return
 
-print("--- 3. Starting camera stream. Press 'q' in the video window to quit ---")
+    print("--- 3. Starting camera stream. Press 'q' in the video window to quit ---")
 
-frame_count = 0
-feedback_message = ""
-feedback_color = COLOR_SUCCESS
-feedback_timer = 0
+    frame_count = 0
+    feedback_message = ""
+    feedback_color = COLOR_SUCCESS
+    feedback_timer = 0
 
-# 4. Main Loop
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Cannot read frame, retrying...")
-        time.sleep(1)
-        continue
+    # 4. Main Loop
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Cannot read frame, retrying...")
+            time.sleep(1)
+            continue
 
-    frame_count += 1
-    
-    # Process only on specified frame rate to save CPU
-    if frame_count % FRAME_SKIP_RATE == 0:
-        small_frame = cv2.resize(frame, (0, 0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
-        rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
-        
-        face_locations = face_recognition.face_locations(rgb_frame)
-        face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+        frame_count += 1
 
-        for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=TOLERANCE)
-            name = "Unknown"
+        # Process only on specified frame rate to save CPU
+        if frame_count % FRAME_SKIP_RATE == 0:
+            small_frame = cv2.resize(frame, (0, 0), fx=RESIZE_FACTOR, fy=RESIZE_FACTOR)
+            rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
 
-            if True in matches:
-                first_match_index = matches.index(True)
-                name = known_face_names[first_match_index]
-            
-            # --- Handle feedback ---
-            if name != "Unknown":
-                result = post_attendance(name, sent_attendances)
-                if result == "SUCCESS":
-                    first_name = student_data_cache.get(name, {}).get('first_name', name)
-                    feedback_message = f"Check-in Success: {first_name}"
-                    feedback_color = COLOR_SUCCESS
+            face_locations = face_recognition.face_locations(rgb_frame)
+            face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
+
+            for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
+                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=TOLERANCE)
+                name = "Unknown"
+
+                if True in matches:
+                    first_match_index = matches.index(True)
+                    name = known_face_names[first_match_index]
+
+                # --- Handle feedback ---
+                if name != "Unknown":
+                    result = post_attendance(name, sent_attendances)
+                    if result == "SUCCESS":
+                        first_name = student_data_cache.get(name, {}).get('first_name', name)
+                        feedback_message = f"Check-in Success: {first_name}"
+                        feedback_color = COLOR_SUCCESS
+                        feedback_timer = time.time()
+                    elif result == "ALREADY_ATTENDED":
+                        feedback_message = "Already Checked In Today"
+                        feedback_color = COLOR_WARNING
+                        feedback_timer = time.time()
+                else:
+                    feedback_message = "Unknown Face Detected"
+                    feedback_color = COLOR_ERROR
                     feedback_timer = time.time()
-                elif result == "ALREADY_ATTENDED":
-                    feedback_message = "Already Checked In Today"
-                    feedback_color = COLOR_WARNING
-                    feedback_timer = time.time()
-            else:
-                feedback_message = "Unknown Face Detected"
-                feedback_color = COLOR_ERROR
-                feedback_timer = time.time()
 
-            # --- Draw on frame ---
-            top, right, bottom, left = [int(v / RESIZE_FACTOR) for v in (top, right, bottom, left)]
-            cv2.rectangle(frame, (left, top), (right, bottom), COLOR_SUCCESS, 2)
-            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), COLOR_BLACK, cv2.FILLED)
-            cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, COLOR_WHITE, 1)
+                # --- Draw on frame ---
+                top, right, bottom, left = [int(v / RESIZE_FACTOR) for v in (top, right, bottom, left)]
+                cv2.rectangle(frame, (left, top), (right, bottom), COLOR_SUCCESS, 2)
+                cv2.rectangle(frame, (left, bottom - 35), (right, bottom), COLOR_BLACK, cv2.FILLED)
+                cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 1.0, COLOR_WHITE, 1)
 
-    # Show feedback if timer is active
-    if time.time() - feedback_timer < FEEDBACK_DURATION:
-        draw_feedback(frame, feedback_message, feedback_color)
-    
-    # Display the resulting image
-    cv2.imshow(WINDOW_NAME, frame)
+        # Show feedback if timer is active
+        if time.time() - feedback_timer < FEEDBACK_DURATION:
+            draw_feedback(frame, feedback_message, feedback_color)
 
-    # Hit 'q' on the keyboard to quit!
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        # Display the resulting image
+        cv2.imshow(WINDOW_NAME, frame)
 
-# 5. Cleanup
-cap.release()
-cv2.destroyAllWindows()
-print("--- Program terminated. ---")
+        # Hit 'q' on the keyboard to quit!
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    # 5. Cleanup
+    cap.release()
+    cv2.destroyAllWindows()
+    print("--- Program terminated. ---")
+
+
+if __name__ == "__main__":
+    main()

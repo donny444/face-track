@@ -43,6 +43,8 @@ next-env.d.ts
 
 # python cache
 /server/__pycache__
+__pycache__/
+.pytest_cache/
 
 # firebase credentials
 /server/firebase.json

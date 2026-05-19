@@ -1,0 +1,6 @@
+# Test-only dependencies for the FastAPI server.
+# Install with: pip install -r requirements-dev.txt
+pytest
+pytest-asyncio
+httpx
+python-dotenv
