@@ -1,0 +1,46 @@
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Node / Next build artifacts (rebuilt inside the image)
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Python (server image has its own .dockerignore but be defensive at root too)
+server/.venv
+server/__pycache__
+server/*.pyc
+server/firebase.json
+server/faces
+
+# Editor / tooling
+.vscode
+.cursor
+.idea
+*.swp
+
+# Environment files (provided via compose secrets / explicit env)
+.env
+.env.*
+
+# Local secrets directory (mounted via docker secrets, never baked in)
+secrets/
+
+# Docs, presentation assets and IDE noise that bloat the build context
+presentation
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+DOCKER.md
+
+# OS files
+.DS_Store
+Thumbs.db

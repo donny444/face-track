@@ -1,0 +1,17 @@
+# Force LF line endings for the Docker assets added in the docker-env branch.
+# These files are consumed by Linux containers (Alpine /bin/sh, nginx, docker
+# engine); CRLF in docker-entrypoint.sh in particular breaks the shebang
+# (`/bin/sh\r` is not an executable).
+#
+# Scope is deliberately narrow so we do not touch the rest of the repo's
+# existing CRLF working-tree state.
+server/docker-entrypoint.sh   text eol=lf
+server/Dockerfile             text eol=lf
+server/.dockerignore          text eol=lf
+server/requirements.server.txt text eol=lf
+Dockerfile                    text eol=lf
+docker-compose.yml            text eol=lf
+docker/nginx/default.conf     text eol=lf
+.dockerignore                 text eol=lf
+.env.docker.example           text eol=lf
+secrets/jwt_secret.example.txt text eol=lf

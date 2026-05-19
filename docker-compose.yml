@@ -1,0 +1,88 @@
+# FaceTrack application stack.
+#
+# Topology:
+#   browser -> nginx:80 -> web:3000  (Next.js UI)
+#                      \-> server:8000 (FastAPI, via /api/* with prefix stripped)
+#
+# The Raspberry-Pi-side face_detection.py client is intentionally NOT a
+# service here; it runs on the Pi (with USB camera + OpenCV) and points at
+# the public server URL. See DOCKER.md.
+name: face-track
+
+networks:
+  facetrack-net:
+    driver: bridge
+
+volumes:
+  face_uploads:
+
+secrets:
+  firebase_credentials:
+    file: ./server/firebase.json
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: face-track/server:dev
+    restart: unless-stopped
+    environment:
+      JWT_TOKEN_TTL_MINUTES: "${JWT_TOKEN_TTL_MINUTES:-60}"
+      VALID_EMAIL_DOMAIN: "${VALID_EMAIL_DOMAIN:-@kmitl.ac.th}"
+    volumes:
+      - face_uploads:/app/faces
+    secrets:
+      - firebase_credentials
+      - jwt_secret
+    networks:
+      - facetrack-net
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/openapi.json"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* is inlined into the JS bundle at build time. When the
+        # nginx proxy is in front of the stack, the browser talks to
+        # http://localhost/api which nginx rewrites to http://server:8000/.
+        #
+        # Trade-off: if you remove the nginx service and expose the server
+        # directly on the host (e.g. `ports: ["8000:8000"]`), change this to
+        # http://localhost:8000 instead. The docker DNS name `server` is NOT
+        # resolvable from the browser, only from inside the compose network.
+        NEXT_PUBLIC_SERVER_URL: "${NEXT_PUBLIC_SERVER_URL:-http://localhost/api}"
+    image: face-track/web:dev
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    networks:
+      - facetrack-net
+    expose:
+      - "3000"
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - web
+      - server
+    networks:
+      - facetrack-net
+    ports:
+      - "80:80"
+    volumes:
+      # Minimal reverse-proxy config. The dedicated `nginx-conf` branch
+      # will ship a comprehensive version (gzip, caching, TLS, etc.).
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro

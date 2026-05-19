@@ -1,0 +1,21 @@
+# Local Python virtualenvs / caches
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets and user-uploaded data; supplied via docker-compose secrets/volumes.
+firebase.json
+faces/
+
+# Dev-only helpers and the Raspberry-Pi face detection client.
+face_detection.py
+test_usb_cam.py
+py_venv.bash
+py_venv.bat
+
+# Misc
+.env
+.env.*
+*.log

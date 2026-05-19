@@ -52,3 +52,7 @@ next-env.d.ts
 
 # global variables in next.js
 /src/data/global_variables.ts
+
+# docker compose secrets (real values, never committed)
+/secrets/jwt_secret.txt
+!.env.docker.example

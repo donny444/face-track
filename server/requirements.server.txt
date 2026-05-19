@@ -1,0 +1,17 @@
+# Server-only Python dependencies for the Docker image.
+#
+# NOTE: server/requirements.txt (used for local development) also lists
+# opencv-python, face-recognition, and numpy. Those are required ONLY by
+# the Raspberry-Pi-side face detection client (server/face_detection.py),
+# which is NOT part of the server container. Excluding them here keeps the
+# image small and avoids the dlib/cmake build chain.
+#
+# python-dotenv is required by main.py / auth_middleware.py (load_dotenv).
+# python-multipart is required by FastAPI for Form() / UploadFile parsing.
+fastapi
+uvicorn[standard]
+firebase-admin
+google-cloud-firestore
+PyJWT
+python-dotenv
+python-multipart
