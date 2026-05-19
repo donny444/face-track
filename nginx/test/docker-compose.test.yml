@@ -1,0 +1,77 @@
+# nginx/test/docker-compose.test.yml
+#
+# Ephemeral compose stack used solely to verify nginx/nginx.conf and
+# nginx/conf.d/*.conf route correctly. The mock services use the same
+# Docker service names as the production stack (`web`, `server`) so the
+# upstream definitions in conf.d/upstreams.conf work unmodified.
+#
+# Run from the repo root:
+#   docker compose -f nginx/test/docker-compose.test.yml \
+#       up --build --abort-on-container-exit --exit-code-from tester
+
+services:
+  # Stand-in for the Next.js client. Service name MUST be `web` so the
+  # production upstream `server web:3000;` resolves correctly here too.
+  web:
+    image: nginx:alpine
+    container_name: facetrack_test_web
+    volumes:
+      - ../test/mock_web/nginx.conf:/etc/nginx/nginx.conf:ro
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:3000/"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  # Stand-in for the FastAPI server. Service name MUST be `server` to
+  # match the production upstream `server server:8000;`.
+  server:
+    image: python:3.12-slim
+    container_name: facetrack_test_server
+    working_dir: /app
+    volumes:
+      - ../test/mock_api.py:/app/mock_api.py:ro
+    command: ["python", "-u", "/app/mock_api.py"]
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz').status==200 else 1)"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  # The system-under-test: real nginx using the real production config
+  # files from ../nginx.conf and ../conf.d/.
+  nginx:
+    image: nginx:alpine
+    container_name: facetrack_test_nginx
+    depends_on:
+      web:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    volumes:
+      - ../nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../conf.d:/etc/nginx/conf.d:ro
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+
+  # Runs the assertions and exits. `--exit-code-from tester` makes
+  # `docker compose up` inherit this container's exit status so CI
+  # passes/fails accordingly.
+  tester:
+    image: alpine:3.20
+    container_name: facetrack_test_tester
+    depends_on:
+      nginx:
+        condition: service_healthy
+    volumes:
+      - ../test/run_tests.sh:/run_tests.sh:ro
+    entrypoint: ["/bin/sh", "/run_tests.sh"]
